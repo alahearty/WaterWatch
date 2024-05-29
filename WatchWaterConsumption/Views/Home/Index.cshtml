@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<link rel="stylesheet" href="~/css/homemap.css">
+
+<div id="map"></div>
+
+<script>
+    // Url Endpoints
+    var dataUrl = "http://localhost:7083/waterconsumption/getall";
+
+    // Basemap urls
+    var osm_humanitarian = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+    var osm_map = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+    var esri_dark_gray_base = L.tileLayer('http://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; <a href="http://services.arcgisonline.com/arcgis/rest/services">ESRI</a> arcgisonline'
+    });
+    var world_street_map = L.tileLayer('http://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+    });
+    var world_imagery = L.tileLayer('http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+
+    // Initialize the map
+    var map = L.map('map', {
+        layers: [osm_humanitarian] // Default basemap
+    }).setView([-33.925, 18.625], 11);
+
+    // Initialize basemaps
+    var baseLayers = {
+        "Open Street Map": osm_map,
+        "OSM Humanitarian": osm_humanitarian,
+        "Dark Gray Base": esri_dark_gray_base,
+        "World Street Map": world_street_map,
+        "World Imagery": world_imagery
+    }
+
+    // Add the layers control
+    L.control.layers(baseLayers).addTo(map);
+
+    // Get colors from: https://colorbrewer2.org/#type=sequential&scheme=YlGn&n=8
+    function getColor(d) {
+        var palette = ['#ffffe5', '#f7fcb9', '#d9f0a3', '#addd8e', '#78c679', '#41ab5d', '#238443', '#005a32'];
+        return d > 40 ? palette[7] :
+            d > 35 ? palette[6] :
+                d > 30 ? palette[5] :
+                    d > 25 ? palette[4] :
+                        d > 20 ? palette[3] :
+                            d > 15 ? palette[2] :
+                                d > 10 ? palette[1] :
+                                    palette[0];
+    }
+
+    $.getJSON(dataUrl, function (data) {
+        data.forEach(function (item) {
+            // Convert the coordinates value to a JavaScript array
+            var conv_poly = JSON.parse(item.coordinates);
+            var poly = L.polygon(conv_poly, {
+                fillColor: getColor(item.averageMonthlyKL),
+                color: 'white',
+                fillOpacity: 0.8,
+                weight: 2
+            });
+            poly.bindPopup(
+                "<h4><b>Suburb Group:</b> " + item.suburb_group + "</h4>" +
+                "<h4><b>Neighbourhood: </b>" + item.neighbourhood + "</h4>" +
+                "<h4><b>Water Consumption: </b>" + item.averageMonthlyKL + " KL </h4>"
+            );
+            poly.on('mouseover', function (e) {
+                this.setStyle({
+                    color: 'yellow',
+                    weight: 5
+                });
+                this.openPopup();
+            });
+            poly.on('mouseout', function (e) {
+                this.setStyle({
+                    color: 'white',
+                    weight: 2
+                });
+                this.closePopup();
+            });
+            poly.addTo(map);
+        });
+    });
+
+    // Create Legend
+    createLegend();
+    function createLegend() {
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function (map) {
+            var legendContainer = L.DomUtil.create('div', 'legend');
+            legendContainer.innerHTML = "<h5 id='legendTitle'>WATER CONSUMPTION IN (KL)</h5>";
+            var grades = [0, 10, 15, 20, 25, 30, 35, 40];
+
+            // Generate a label with a colored square
+            for (var i = 0; i < grades.length; i++) {
+                legendContainer.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+
+            return legendContainer;
+        };
+
+        legend.addTo(map);
+    }
+
+    // Bar chart legend
+    barChartLegend();
+    function barChartLegend() {
+        var info = L.control({ position: 'topright' });
+        info.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info');
+            div.innerHTML = '<h5>Top 10 Consumers (KL)</h5>';
+            div.innerHTML += '<canvas id="horBarChart"></canvas>';
+            return div;
+        };
+        info.addTo(map);
+    }
+
+    // Display horizontal bar chart
+    displayHorBarChart();
+    function displayHorBarChart() {
+        var x_labels = [];
+        var y_data = [];
+
+        $.ajax({
+            url: "/waterconsumption/topten",
+            cache: "false",
+            dataType: "json",
+            type: "GET",
+            success: function (data) {
+                data.forEach(function (item) {
+                    x_labels.push(item.neighbourhood);
+                    y_data.push(item.averageMonthlyKL);
+                });
+
+                var label_array = x_labels;
+                var data_array = y_data;
+                var bar_colors = data_array.map(getColor);
+
+                var ctx = document.getElementById("horBarChart").getContext("2d");
+                var horBarChart = new Chart(ctx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: label_array,
+                        datasets: [{
+                            label: 'Water Consumption',
+                            backgroundColor: bar_colors,
+                            borderColor: "rgba(0,90,50,1)",
+                            data: data_array
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }],
+                            xAxes: [{
+                                ticks: {
+                                    autoSkip: false,
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Error: ' + status + ' - ' + error);
+            }
+        });
+    }
+</script>
