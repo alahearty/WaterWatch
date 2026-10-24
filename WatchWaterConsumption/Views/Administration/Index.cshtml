@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "Administration";
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs">Governance &amp; data</div>
+        <h1>Administration</h1>
+        <p>Users and roles, audit trail, import batches, data sources and spatial ingestion. Authorisation is enforced by the API, not only by hiding controls.</p>
+    </div>
+    <div class="page-actions"><a class="btn" href="/health" target="_blank" rel="noopener"><i class="fa fa-heartbeat"></i> Health</a></div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="tabs" id="admin-tabs">
+            <button type="button" class="active" data-tab="admin-users">Users &amp; roles</button>
+            <button type="button" data-tab="admin-imports">Spatial import</button>
+            <button type="button" data-tab="admin-batches">Import batches</button>
+            <button type="button" data-tab="admin-audit">Audit trail</button>
+            <button type="button" data-tab="admin-sources">Data sources</button>
+        </div>
+
+        <div class="tab-panel active" id="admin-users">
+            <div class="grid grid-main">
+                <div class="card"><div class="card-head"><h3>Users</h3><span class="sub" id="user-count">—</span></div><div class="card-body flush" id="admin-users-table"><div class="loading-block"><div class="skeleton"></div></div></div></div>
+                <div class="card"><div class="card-head"><h3>Roles</h3></div><div class="card-body"><div id="admin-roles"></div><div class="availability mt-2"><i class="fa fa-lock"></i><div>Role changes are audited. The last active administrator cannot lose the Administrator role.</div></div></div></div>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="admin-imports">
+            <div class="grid grid-main">
+                <div class="card"><div class="card-head"><h3>Import a spatial layer</h3><span class="badge badge-outline">GeoJSON · CSV · KML · SHP.zip · GPKG</span></div><div class="card-body">
+                    <form id="spatial-import-form">
+                        <div class="field"><label>File</label><input class="input" type="file" name="file" required accept=".geojson,.json,.csv,.kml,.zip,.gpkg" /></div>
+                        <div class="field-row"><div class="field"><label>Layer key</label><input class="input" name="layerKey" placeholder="rivers-roads-waterpoints" required /></div><div class="field"><label>Layer name</label><input class="input" name="layerName" required /></div></div>
+                        <div class="field-row"><div class="field"><label>Category</label><input class="input" name="category" value="Imported" /></div><div class="field"><label>Declared SRID</label><input class="input" type="number" name="declaredSrid" value="4326" /></div></div>
+                        <div class="field-row"><div class="field"><label>Source name</label><input class="input" name="sourceName" placeholder="e.g. OCHA COD-AB" /></div><div class="field"><label>Licence</label><input class="input" name="licence" /></div></div>
+                        <div class="field"><label>Source URL</label><input class="input" name="sourceUrl" /></div>
+                        <label class="checkbox"><input type="checkbox" name="commit" /> Commit (otherwise preview only)</label>
+                        <button class="btn btn-primary mt-1" type="submit"><i class="fa fa-upload"></i> Validate / import</button>
+                    </form>
+                    <div id="spatial-import-result" class="mt-2"></div>
+                </div></div>
+                <div class="card"><div class="card-head"><h3>Service &amp; raster registration</h3></div><div class="card-body">
+                    <form id="service-form">
+                        <div class="field-row"><div class="field"><label>Layer key</label><input class="input" name="layerKey" required /></div><div class="field"><label>Layer name</label><input class="input" name="layerName" required /></div></div>
+                        <div class="field-row"><div class="field"><label>Service type</label><select class="select" name="serviceType"><option>WMS</option><option>WFS</option></select></div><div class="field"><label>Service layer</label><input class="input" name="serviceLayerName" required /></div></div>
+                        <div class="field"><label>Service URL</label><input class="input" name="serviceUrl" required /></div>
+                        <div class="field-row"><div class="field"><label>Category</label><input class="input" name="category" value="External service" /></div><div class="field"><label>Licence</label><input class="input" name="licence" /></div></div>
+                        <button class="btn" type="submit">Register service</button>
+                    </form>
+                    <div id="service-result" class="mt-2"></div>
+                    <hr style="border:0;border-top:1px solid #edf2f7;margin:14px 0" />
+                    <form id="raster-form">
+                        <div class="field-row"><div class="field"><label>Raster key</label><input class="input" name="layerKey" required /></div><div class="field"><label>Raster name</label><input class="input" name="layerName" required /></div></div>
+                        <div class="field-row"><div class="field"><label>SRID</label><input class="input" type="number" name="srid" value="4326" /></div><div class="field"><label>Resolution (m)</label><input class="input" type="number" step="0.01" name="resolutionMeters" /></div></div>
+                        <div class="field-row"><div class="field"><label>Min lon</label><input class="input" type="number" step="0.000001" name="minLon" /></div><div class="field"><label>Min lat</label><input class="input" type="number" step="0.000001" name="minLat" /></div></div>
+                        <div class="field-row"><div class="field"><label>Max lon</label><input class="input" type="number" step="0.000001" name="maxLon" /></div><div class="field"><label>Max lat</label><input class="input" type="number" step="0.000001" name="maxLat" /></div></div>
+                        <button class="btn" type="submit">Register GeoTIFF metadata</button>
+                    </form>
+                    <div id="raster-result" class="mt-2"></div>
+                </div></div>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="admin-batches"><div class="card"><div class="card-head"><h3>Import batches</h3></div><div class="card-body flush" id="admin-batches-table"></div></div></div>
+        <div class="tab-panel" id="admin-audit"><div class="card"><div class="card-head"><h3>Audit trail</h3><span class="sub">Latest 200 writes</span></div><div class="card-body flush" id="admin-audit-table"></div></div></div>
+        <div class="tab-panel" id="admin-sources"><div class="card"><div class="card-head"><h3>Data sources</h3></div><div class="card-body flush" id="admin-sources-table"></div></div></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="roles-modal">
+    <div class="modal"><div class="modal-head"><h3>Edit user roles</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="roles-form"><div class="modal-body">
+            <div class="field"><label>User</label><input class="input" id="roles-user" readonly /></div>
+            <div class="field"><label>Roles</label><div id="roles-checkboxes" class="grid grid-2"></div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save roles</button></div></form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/administration.js"></script>
+}

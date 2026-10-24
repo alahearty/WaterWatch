@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Remote Sensing";
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs">Earth observation</div>
+        <h1>Remote sensing &amp; environmental change</h1>
+        <p>Search real Sentinel-2 and Landsat scene metadata from the Element 84 Earth Search STAC catalogue. Imagery previews are for visual comparison; quantitative change products must be imported with their processing parameters and provenance.</p>
+    </div>
+    <div class="page-actions"><a class="btn" href="https://earth-search.aws.element84.com/v1" target="_blank" rel="noopener"><i class="fa fa-external-link"></i> STAC catalogue</a></div>
+</div>
+<div class="card mb-2">
+    <div class="card-body">
+        <div class="toolbar">
+            <select class="select" id="rs-collection" style="width:220px"><option value="sentinel-2-l2a">Sentinel-2 L2A</option><option value="landsat-c2-l2">Landsat Collection 2 L2</option></select>
+            <label class="small muted" for="rs-from">From</label><input class="input" type="date" id="rs-from" style="width:150px" />
+            <label class="small muted" for="rs-to">To</label><input class="input" type="date" id="rs-to" style="width:150px" />
+            <label class="small muted" for="rs-cloud">Max cloud %</label><input class="input" id="rs-cloud" type="number" value="50" min="0" max="100" style="width:90px" />
+            <button class="btn btn-primary" id="rs-search" type="button"><i class="fa fa-search"></i> Search</button>
+            <span class="spacer"></span>
+            <span class="badge badge-outline" id="rs-status">Not searched</span>
+        </div>
+    </div>
+</div>
+<div id="rs-availability" class="mb-2"></div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Scene catalogue</h3><span class="sub" id="rs-count">—</span></div><div class="card-body" id="rs-scenes"><div class="empty-state"><div class="icon"><i class="fa fa-satellite"></i></div><h3>Search the catalogue</h3><p>Set a date range and cloud threshold, then search. Thumbnails and metadata are served by the STAC catalogue.</p></div></div></div>
+    <div class="card"><div class="card-head"><h3>Before / after preview</h3><span class="badge badge-outline">Visual only</span></div><div class="card-body">
+        <div class="field-row"><div class="field"><label>Left scene</label><select class="select" id="rs-left"></select></div><div class="field"><label>Right scene</label><select class="select" id="rs-right"></select></div></div>
+        <div class="split-slider" id="rs-slider" style="min-height:330px"><div class="split-label before">Before</div><div class="split-label after">After</div><div class="after-wrap" id="rs-after-wrap"><img id="rs-after" alt="After scene thumbnail" /></div><img id="rs-before" alt="Before scene thumbnail" /><input type="range" id="rs-range" min="0" max="100" value="50" /></div>
+        <div class="tiny muted mt-1">Previews may have different extents, cloud cover and processing levels. This slider is not a radiometrically harmonised change detection product.</div>
+    </div></div>
+</div>
+<div class="card">
+    <div class="card-head"><h3>Imported environmental change layers</h3><span class="sub">Derived products with processing provenance</span></div>
+    <div class="card-body" id="rs-change-layers"></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/remote-sensing.js"></script>
+}

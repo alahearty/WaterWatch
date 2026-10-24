@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Forecasting";
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs">Decision support</div>
+        <h1>Forecasting &amp; risk prioritisation</h1>
+        <p>Interpretable baselines only. Every forecast exposes its model, training window, coverage, validation metrics and uncertainty. Risk rankings are rule-based, not machine-learning predictions.</p>
+    </div>
+    <div class="page-actions"><a class="btn" asp-controller="Analytics" asp-action="Index"><i class="fa fa-cubes"></i> Spatial analytics</a></div>
+</div>
+<div id="forecast-availability" class="mb-2"></div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Water demand forecast</h3><span class="badge badge-teal">OLS baseline</span></div>
+        <div class="card-body"><div class="chart-box" id="demand-chart-wrap"><canvas id="demand-chart"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Model card</h3></div><div class="card-body" id="demand-model-card"><div class="loading-block"><div class="skeleton"></div><div class="skeleton"></div></div></div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Asset failure risk</h3><span class="badge badge-outline">Rule-based index</span></div><div class="card-body flush" id="asset-risk"></div></div>
+    <div class="card"><div class="card-head"><h3>Leakage investigation priority</h3></div><div class="card-body flush" id="leak-priority"></div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Groundwater level forecast</h3><div class="flex gap-1"><select class="select" id="forecast-borehole" style="width:250px"></select><button class="btn btn-sm" id="forecast-water-level" type="button">Run</button></div></div>
+        <div class="card-body"><div class="chart-box" id="water-level-chart-wrap"><canvas id="water-level-chart"></canvas></div><div id="water-level-card" class="mt-2"></div></div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Water quality deterioration</h3></div><div class="card-body flush" id="quality-deterioration"></div></div>
+</div>
+<div class="card"><div class="card-head"><h3>Method &amp; limitations</h3></div><div class="card-body">
+    <div class="grid grid-2">
+        <div><h3 class="small">Implemented baselines</h3><ul class="small muted"><li>Ordinary least squares on monthly consumption with a 3-month holdout when enough history exists.</li><li>OLS groundwater-level trend with a 95% residual band.</li><li>Transparent weighted asset-risk and DMA leakage-priority indices.</li><li>Monotonic trend screening for quality parameters.</li></ul></div>
+        <div><h3 class="small">Not claimed</h3><ul class="small muted"><li>No machine-learning model is trained or presented without validation data.</li><li>No forecast is generated from fewer than the documented minimum observations.</li><li>Risk scores are screening aids, not failure probabilities or operational safety decisions.</li><li>Prediction intervals are only as good as the model assumptions and input coverage.</li></ul></div>
+    </div>
+</div></div>
+
+@section Scripts {
+    <script src="~/js/pages/forecasting.js"></script>
+}

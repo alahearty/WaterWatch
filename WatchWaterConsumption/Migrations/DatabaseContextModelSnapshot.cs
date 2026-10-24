@@ -3,8 +3,9 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using WatchWaterConsumption;
+using WaterWatch.Data;
 
 #nullable disable
 
@@ -20,7 +21,140 @@ namespace WatchWaterConsumption.Migrations
                 .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
 
             modelBuilder.Entity("WatchWaterConsumption.Models.WaterConsumption", b =>
                 {
@@ -59,7 +193,3379 @@ namespace WatchWaterConsumption.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Consumptions");
+                    b.ToTable("Consumptions", (string)null);
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.AdminArea", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Alias")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<double?>("AreaSqKm")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Geometry>("Geometry")
+                        .HasColumnType("geometry (Geometry, 4326)");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("Population")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PopulationSource")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PopulationYear")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("Level", "ParentId");
+
+                    b.ToTable("AdminAreas");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Alert", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AcknowledgedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("AlertRuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("EscalatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EscalationCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("TriggeredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Value")
+                        .HasPrecision(18, 5)
+                        .HasColumnType("numeric(18,5)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlertRuleId");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("Status", "TriggeredAt");
+
+                    b.ToTable("Alerts");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.AlertRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeviceType")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("EscalationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Operator")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Parameter")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("Threshold")
+                        .HasPrecision(18, 5)
+                        .HasColumnType("numeric(18,5)");
+
+                    b.Property<decimal?>("Threshold2")
+                        .HasPrecision(18, 5)
+                        .HasColumnType("numeric(18,5)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AlertRules");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Organisation")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Asset", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AdminAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssetCode")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("AssetType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<decimal?>("CapacityM3PerDay")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DesignParametersJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<Geometry>("Geometry")
+                        .HasColumnType("geometry (Geometry, 4326)");
+
+                    b.Property<DateOnly?>("InstalledOn")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("OperationalAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Operator")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Owner")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SourceReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SpecificationsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminAreaId");
+
+                    b.HasIndex("AssetCode")
+                        .IsUnique();
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("OperationalAreaId");
+
+                    b.HasIndex("AssetType", "Status");
+
+                    b.ToTable("Assets");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.AssetDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Caption")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UploadedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.ToTable("AssetDocuments");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.AuditEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DetailsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.HasIndex("EntityType", "EntityId");
+
+                    b.ToTable("AuditEntries");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.BoreholeDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AquiferClassification")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("AquiferClassificationInferred")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("AquiferName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("BoreholeDepthM")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("ConstructionJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateOnly?>("DrilledOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Driller")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("DynamicWaterLevelM")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("LithologyJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<decimal?>("ScreenBottomM")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("ScreenTopM")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("StaticWaterLevelM")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("YieldM3PerHour")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId")
+                        .IsUnique();
+
+                    b.ToTable("BoreholeDetails");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ConsumerAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("AdminAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DmaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("HouseholdSize")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ServiceZoneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountNumber")
+                        .IsUnique();
+
+                    b.HasIndex("AdminAreaId");
+
+                    b.HasIndex("DmaId");
+
+                    b.HasIndex("ServiceZoneId");
+
+                    b.ToTable("ConsumerAccounts");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ConsumptionImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ErrorsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RowsAccepted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RowsRejected")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RowsTotal")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConsumptionImports");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.DataSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AcquiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Coverage")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DataClassification")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsOfficial")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Licence")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LicenceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Publisher")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("QualityNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UpdateFrequency")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("DataSources");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Device", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApiKeyHash")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("DeviceCode")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("DeviceType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("FirmwareVersion")
+                        .HasColumnType("text");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<Guid?>("HydrologyStationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("InstalledOn")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsDemoDevice")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OfflineThresholdMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("DeviceCode")
+                        .IsUnique();
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("HydrologyStationId");
+
+                    b.ToTable("Devices");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.DmaWaterBalance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ApparentLossesM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal>("BilledVolumeM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DmaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("InputVolumeM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("Method")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("MinimumNightFlowM3PerHour")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("RealLossesM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<decimal?>("UnbilledAuthorisedM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("UncertaintyNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("DmaId", "PeriodStart")
+                        .IsUnique();
+
+                    b.ToTable("DmaWaterBalances");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.DrainageObstruction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AdminAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ReportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReportedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WaterwayName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("WorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminAreaId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.ToTable("DrainageObstructions");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.FloodEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsOfficial")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StartedAt");
+
+                    b.ToTable("FloodEvents");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.FloodExposureResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AnalysedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AnalysedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("AssetsExposed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("DevicesExposed")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("FloodLayerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Limitations")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Method")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<long?>("PopulationExposed")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ResultsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("SamplingStationsExposed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnalysedAt");
+
+                    b.HasIndex("FloodLayerId");
+
+                    b.ToTable("FloodExposureResults");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.FloodLayer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Assumptions")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("FloodEventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Geometry>("Geometry")
+                        .HasColumnType("geometry (Geometry, 4326)");
+
+                    b.Property<bool>("IsOfficial")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LayerType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ModelVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Uncertainty")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ValidFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ValidationStatus")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("FloodEventId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.ToTable("FloodLayers");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.GroundwaterReading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("AbstractionM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<Guid>("BoreholeAssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ObservedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("WaterLevelM")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("BoreholeAssetId", "ObservedAt");
+
+                    b.ToTable("GroundwaterReadings");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.HydrologyObservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ObservedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Parameter")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("QualityFlag")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("StationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("ObservedAt");
+
+                    b.HasIndex("StationId", "Parameter", "ObservedAt")
+                        .IsUnique();
+
+                    b.ToTable("HydrologyObservations");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.HydrologyStation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AdminAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Datum")
+                        .HasColumnType("text");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StationType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WaterwayName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminAreaId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.ToTable("HydrologyStations");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ImportBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Format")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("RequestedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RowsAccepted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RowsRejected")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RowsTotal")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("TargetLayerKey")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.ToTable("ImportBatches");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.InspectionRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ConditionAfter")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Findings")
+                        .HasColumnType("text");
+
+                    b.Property<string>("InspectorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhotoPathsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("ScheduledFor")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("ScheduledFor");
+
+                    b.ToTable("Inspections");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.LeakIncident", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DmaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("EstimatedLossIsEstimate")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("EstimatedLossM3PerHour")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("ReportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("WorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("DmaId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.ToTable("LeakIncidents");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.MaintenanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("PerformedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PerformedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("WorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("PerformedAt");
+
+                    b.ToTable("MaintenanceRecords");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Meter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ConsumerAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateOnly?>("InstalledOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Manufacturer")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Model")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Multiplier")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)");
+
+                    b.Property<decimal?>("RolloverValueM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("ConsumerAccountId");
+
+                    b.HasIndex("SerialNumber")
+                        .IsUnique();
+
+                    b.ToTable("Meters");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.MeterReading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("CorrectedFromValueM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("CorrectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("ImportBatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MeterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("ReadingDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ReadingType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("ReadingValueM3")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ValidatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ValidatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportBatchId");
+
+                    b.HasIndex("ReadingDate");
+
+                    b.HasIndex("MeterId", "ReadingDate")
+                        .IsUnique();
+
+                    b.ToTable("MeterReadings");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.NetworkEdge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<decimal?>("DiameterMm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid>("FromNodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<LineString>("Geometry")
+                        .HasColumnType("geometry (LineString, 4326)");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("LengthM")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Material")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ToNodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("FromNodeId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("ToNodeId");
+
+                    b.ToTable("NetworkEdges");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.NetworkNode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NodeType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.ToTable("NetworkNodes");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.OperationalArea", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("AreaSqKm")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("AreaType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Geometry>("Geometry")
+                        .HasColumnType("geometry (Geometry, 4326)");
+
+                    b.Property<bool>("IsOfficial")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("Population")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("OperationalAreas");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.PumpingTest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BoreholeAssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConductedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<decimal?>("DrawdownM")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("PumpingRateM3PerHour")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<int?>("RecoveryMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResultJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("TestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoreholeAssetId");
+
+                    b.HasIndex("TestedAt");
+
+                    b.ToTable("PumpingTests");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.QualityLimit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<decimal?>("MaxValue")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<decimal?>("MinValue")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Parameter")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("ReferenceSection")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StandardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StandardId", "Parameter")
+                        .IsUnique();
+
+                    b.ToTable("QualityLimits");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.QualityStandard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Authority")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("QualityStandards");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ReportJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParametersJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("RecordCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReportType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReportJobs");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SampleResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AppliedLimitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AssessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AssessmentNote")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<decimal?>("DetectionLimit")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<string>("Method")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Parameter")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Qualifier")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SampleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StandardCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Value")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppliedLimitId");
+
+                    b.HasIndex("Parameter", "State");
+
+                    b.HasIndex("SampleId", "Parameter")
+                        .IsUnique();
+
+                    b.ToTable("SampleResults");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SamplingCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccreditationReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateOnly?>("EndedOn")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("LaboratoryAccredited")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LaboratoryName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Purpose")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("StartedOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("SamplingCampaigns");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SamplingStation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AdminAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ServiceZoneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WaterSourceType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminAreaId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("ServiceZoneId");
+
+                    b.ToTable("SamplingStations");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SatelliteScene", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AcquiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AssetsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<decimal?>("CloudCover")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<string>("Collection")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Geometry>("Footprint")
+                        .HasColumnType("geometry (Geometry, 4326)");
+
+                    b.Property<string>("Licence")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("ResolutionM")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)");
+
+                    b.Property<DateTimeOffset>("RetrievedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SceneId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcquiredAt");
+
+                    b.HasIndex("Provider", "SceneId")
+                        .IsUnique();
+
+                    b.ToTable("SatelliteScenes");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SpatialFeature", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AttributesJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Geometry>("Geometry")
+                        .IsRequired()
+                        .HasColumnType("geometry (Geometry, 4326)");
+
+                    b.Property<string>("GeometryHash")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LayerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("LayerId", "ExternalId");
+
+                    b.HasIndex("LayerId", "GeometryHash");
+
+                    b.ToTable("SpatialFeatures");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SpatialLayer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("DataSourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("FeatureCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GeometryType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVisibleByDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("MinZoom")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ServiceLayerName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServiceType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServiceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StyleJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataSourceId");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("SpatialLayers");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.TelemetryReading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ObservedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Parameter")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Quality")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("RawPayloadJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 5)
+                        .HasColumnType("numeric(18,5)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ObservedAt");
+
+                    b.HasIndex("DeviceId", "ObservedAt", "Parameter")
+                        .IsUnique();
+
+                    b.ToTable("TelemetryReadings");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WaterSample", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SampleCode")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset>("SampledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SampledBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("SampleCode")
+                        .IsUnique();
+
+                    b.HasIndex("SampledAt");
+
+                    b.HasIndex("StationId");
+
+                    b.ToTable("WaterSamples");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WorkOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssignedTo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClosedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Point>("Geometry")
+                        .HasColumnType("geometry (Point, 4326)");
+
+                    b.Property<string>("PhotoPathsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("ReportedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VerificationNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VerifiedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("Geometry");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Geometry"), "gist");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "Priority");
+
+                    b.ToTable("WorkOrders");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WorkOrderEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataClassification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("FromStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedAt");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.ToTable("WorkOrderEvents");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WaterWatch.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.AdminArea", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.AdminArea", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Alert", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.AlertRule", "AlertRule")
+                        .WithMany()
+                        .HasForeignKey("AlertRuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WaterWatch.Domain.Entities.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AlertRule");
+
+                    b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Asset", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.AdminArea", "AdminArea")
+                        .WithMany()
+                        .HasForeignKey("AdminAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "OperationalArea")
+                        .WithMany()
+                        .HasForeignKey("OperationalAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AdminArea");
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("OperationalArea");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.AssetDocument", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany("Documents")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.BoreholeDetail", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ConsumerAccount", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.AdminArea", "AdminArea")
+                        .WithMany()
+                        .HasForeignKey("AdminAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "Dma")
+                        .WithMany()
+                        .HasForeignKey("DmaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "ServiceZone")
+                        .WithMany()
+                        .HasForeignKey("ServiceZoneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AdminArea");
+
+                    b.Navigation("Dma");
+
+                    b.Navigation("ServiceZone");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Device", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.HydrologyStation", "HydrologyStation")
+                        .WithMany()
+                        .HasForeignKey("HydrologyStationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("HydrologyStation");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.DmaWaterBalance", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "Dma")
+                        .WithMany()
+                        .HasForeignKey("DmaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("Dma");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.DrainageObstruction", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.AdminArea", "AdminArea")
+                        .WithMany()
+                        .HasForeignKey("AdminAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AdminArea");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.FloodExposureResult", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.FloodLayer", "FloodLayer")
+                        .WithMany()
+                        .HasForeignKey("FloodLayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FloodLayer");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.FloodLayer", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.FloodEvent", "FloodEvent")
+                        .WithMany()
+                        .HasForeignKey("FloodEventId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("FloodEvent");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.GroundwaterReading", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Borehole")
+                        .WithMany()
+                        .HasForeignKey("BoreholeAssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Borehole");
+
+                    b.Navigation("DataSource");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.HydrologyObservation", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.HydrologyStation", "Station")
+                        .WithMany("Observations")
+                        .HasForeignKey("StationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.HydrologyStation", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.AdminArea", "AdminArea")
+                        .WithMany()
+                        .HasForeignKey("AdminAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AdminArea");
+
+                    b.Navigation("DataSource");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ImportBatch", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId");
+
+                    b.Navigation("DataSource");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.InspectionRecord", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany("Inspections")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.LeakIncident", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "Dma")
+                        .WithMany()
+                        .HasForeignKey("DmaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.WorkOrder", "WorkOrder")
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("Dma");
+
+                    b.Navigation("WorkOrder");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.MaintenanceRecord", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany("MaintenanceRecords")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Meter", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.ConsumerAccount", "ConsumerAccount")
+                        .WithMany("Meters")
+                        .HasForeignKey("ConsumerAccountId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("ConsumerAccount");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.MeterReading", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.ConsumptionImport", "ImportBatch")
+                        .WithMany()
+                        .HasForeignKey("ImportBatchId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.Meter", "Meter")
+                        .WithMany("Readings")
+                        .HasForeignKey("MeterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ImportBatch");
+
+                    b.Navigation("Meter");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.NetworkEdge", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.NetworkNode", "FromNode")
+                        .WithMany()
+                        .HasForeignKey("FromNodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WaterWatch.Domain.Entities.NetworkNode", "ToNode")
+                        .WithMany()
+                        .HasForeignKey("ToNodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("FromNode");
+
+                    b.Navigation("ToNode");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.NetworkNode", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.OperationalArea", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.PumpingTest", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Borehole")
+                        .WithMany()
+                        .HasForeignKey("BoreholeAssetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Borehole");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.QualityLimit", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.QualityStandard", "Standard")
+                        .WithMany("Limits")
+                        .HasForeignKey("StandardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Standard");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SampleResult", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.QualityLimit", "AppliedLimit")
+                        .WithMany()
+                        .HasForeignKey("AppliedLimitId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.WaterSample", "Sample")
+                        .WithMany("Results")
+                        .HasForeignKey("SampleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppliedLimit");
+
+                    b.Navigation("Sample");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SamplingStation", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.AdminArea", "AdminArea")
+                        .WithMany()
+                        .HasForeignKey("AdminAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WaterWatch.Domain.Entities.OperationalArea", "ServiceZone")
+                        .WithMany()
+                        .HasForeignKey("ServiceZoneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AdminArea");
+
+                    b.Navigation("DataSource");
+
+                    b.Navigation("ServiceZone");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SpatialFeature", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.SpatialLayer", "Layer")
+                        .WithMany()
+                        .HasForeignKey("LayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Layer");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SpatialLayer", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.DataSource", "DataSource")
+                        .WithMany()
+                        .HasForeignKey("DataSourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DataSource");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.TelemetryReading", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Device", "Device")
+                        .WithMany("Readings")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WaterSample", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.SamplingCampaign", "Campaign")
+                        .WithMany("Samples")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WaterWatch.Domain.Entities.SamplingStation", "Station")
+                        .WithMany("Samples")
+                        .HasForeignKey("StationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WorkOrder", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WorkOrderEvent", b =>
+                {
+                    b.HasOne("WaterWatch.Domain.Entities.WorkOrder", "WorkOrder")
+                        .WithMany("Events")
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkOrder");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Asset", b =>
+                {
+                    b.Navigation("Documents");
+
+                    b.Navigation("Inspections");
+
+                    b.Navigation("MaintenanceRecords");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.ConsumerAccount", b =>
+                {
+                    b.Navigation("Meters");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Device", b =>
+                {
+                    b.Navigation("Readings");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.HydrologyStation", b =>
+                {
+                    b.Navigation("Observations");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.Meter", b =>
+                {
+                    b.Navigation("Readings");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.QualityStandard", b =>
+                {
+                    b.Navigation("Limits");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SamplingCampaign", b =>
+                {
+                    b.Navigation("Samples");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.SamplingStation", b =>
+                {
+                    b.Navigation("Samples");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WaterSample", b =>
+                {
+                    b.Navigation("Results");
+                });
+
+            modelBuilder.Entity("WaterWatch.Domain.Entities.WorkOrder", b =>
+                {
+                    b.Navigation("Events");
                 });
 #pragma warning restore 612, 618
         }

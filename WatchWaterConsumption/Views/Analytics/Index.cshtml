@@ -1,0 +1,59 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Spatial Analytics";
+    var authenticated = User.Identity?.IsAuthenticated == true;
+}
+<div id="analytics-permissions" data-authenticated="@(authenticated ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">PostGIS analysis</div>
+        <h1>Spatial analytics</h1>
+        <p>Point-in-polygon, metric buffers, proximity, coverage, asset density, network tracing and isolation. Metric operations use UTM zone 32N or PostGIS geography; degrees are never treated as metres.</p>
+    </div>
+    <div class="page-actions"><a class="btn" asp-controller="Gis" asp-action="Index"><i class="fa fa-globe"></i> GIS Explorer</a></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Analysis map</h3><span class="badge badge-outline">Click map to set a point</span></div><div class="card-body flush" style="position:relative;height:500px"><div id="analytics-map" style="position:absolute;inset:0"></div></div></div>
+    <div class="card">
+        <div class="card-head"><h3>Point &amp; proximity</h3></div>
+        <div class="card-body">
+            <div class="field-row"><div class="field"><label>Longitude</label><input class="input" id="an-lon" value="7.0498" /></div><div class="field"><label>Latitude</label><input class="input" id="an-lat" value="4.8156" /></div></div>
+            <div class="flex gap-1 flex-wrap mb-2"><button class="btn btn-primary" id="an-pip" type="button"><i class="fa fa-map-marker"></i> Point in polygon</button><button class="btn" id="an-nearest" type="button" @(authenticated ? "" : "disabled")><i class="fa fa-crosshairs"></i> Nearest assets</button></div>
+            <div id="an-point-result"><div class="availability"><i class="fa fa-hand-pointer-o"></i><div>Click the map or enter coordinates to inspect the containing LGA and operational areas.</div></div></div>
+        </div>
+    </div>
+</div>
+<div class="grid grid-2 mb-2">
+    <div class="card"><div class="card-head"><h3>Metric buffer</h3><span class="badge badge-teal">UTM 32N</span></div><div class="card-body">
+        <div class="field-row"><div class="field"><label>Radius (metres)</label><input class="input" id="an-radius" type="number" value="500" min="1" max="50000" /></div><div class="field"><label>Anchor</label><input class="input" id="an-anchor" value="Map coordinate" readonly /></div></div>
+        <button class="btn btn-primary" id="an-buffer" type="button"><i class="fa fa-dot-circle-o"></i> Generate buffer</button>
+        <div id="an-buffer-result" class="mt-2"></div>
+    </div></div>
+    <div class="card"><div class="card-head"><h3>Service coverage</h3><span class="badge badge-outline" id="coverage-status">Auth required</span></div><div class="card-body">
+        <div class="field-row"><div class="field"><label>Asset type</label><select class="select" id="an-coverage-type"><option value="">All assets</option><option>Borehole</option><option>Reservoir</option><option>ElevatedTank</option><option>TreatmentPlant</option><option>PumpingStation</option><option>Hydrant</option></select></div><div class="field"><label>Radius (metres)</label><input class="input" id="an-coverage-radius" type="number" value="500" /></div></div>
+        <button class="btn btn-primary" id="an-coverage" type="button" @(authenticated ? "" : "disabled")><i class="fa fa-circle-o"></i> Calculate coverage</button>
+        <div id="an-coverage-result" class="mt-2"></div>
+    </div></div>
+</div>
+<div class="grid grid-3">
+    <div class="card"><div class="card-head"><h3>Asset density</h3></div><div class="card-body">
+        <div class="field"><label>Dimension</label><select class="select" id="an-density-dim"><option value="lga">LGA</option><option value="servicezone">Service zone</option></select></div>
+        <button class="btn" id="an-density" type="button" @(authenticated ? "" : "disabled")><i class="fa fa-th"></i> Calculate density</button>
+        <div id="an-density-result" class="mt-2"></div>
+    </div></div>
+    <div class="card"><div class="card-head"><h3>Network trace</h3></div><div class="card-body">
+        <div class="field"><label>Node</label><select class="select" id="an-node"></select></div>
+        <div class="field"><label>Direction</label><select class="select" id="an-direction"><option value="downstream">Downstream</option><option value="upstream">Upstream</option></select></div>
+        <button class="btn" id="an-trace" type="button" @(authenticated ? "" : "disabled")><i class="fa fa-share-alt"></i> Trace verified network</button>
+        <div id="an-trace-result" class="mt-2"></div>
+    </div></div>
+    <div class="card"><div class="card-head"><h3>Isolation analysis</h3></div><div class="card-body">
+        <div class="field"><label>Close edge</label><select class="select" id="an-edge"></select></div>
+        <button class="btn" id="an-isolation" type="button" @(authenticated ? "" : "disabled")><i class="fa fa-chain-broken"></i> Analyse isolation</button>
+        <div id="an-isolation-result" class="mt-2"></div>
+    </div></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/analytics.js"></script>
+}

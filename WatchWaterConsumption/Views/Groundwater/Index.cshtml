@@ -1,0 +1,78 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Groundwater";
+    var canManage = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.Hydrologist));
+    var canEditAsset = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.GisAnalyst) || User.IsInRole(Roles.WaterUtilityEngineer));
+}
+<div id="groundwater-permissions" data-can-manage="@(canManage ? "true" : "false")" data-can-edit-asset="@(canEditAsset ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Aquifer &amp; borehole intelligence</div>
+        <h1>Groundwater</h1>
+        <p>Borehole construction, observed water levels and abstraction, pumping tests, aquifer records and nearby contamination sources. Inferred geological classifications are not presented as observed aquifer properties.</p>
+    </div>
+    <div class="page-actions">
+        @if (canEditAsset)
+        {
+            <a class="btn btn-primary" asp-controller="Infrastructure" asp-action="Index"><i class="fa fa-plus"></i> Register borehole asset</a>
+        }
+        <a class="btn" asp-controller="Gis" asp-action="Index"><i class="fa fa-globe"></i> Map</a>
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue"><div class="kpi-label">Boreholes / wells</div><div class="kpi-value" id="g-boreholes">—</div><div class="kpi-foot" id="g-details">— with construction details</div></div>
+    <div class="kpi"><div class="kpi-label">Readings</div><div class="kpi-value" id="g-readings">—</div><div class="kpi-foot" id="g-last">No readings</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Pumping tests</div><div class="kpi-value" id="g-tests">—</div><div class="kpi-foot">Yield and drawdown evidence</div></div>
+    <div class="kpi kpi-purple"><div class="kpi-label">Inferred aquifers</div><div class="kpi-value" id="g-inferred">—</div><div class="kpi-foot">Not observed properties</div></div>
+</div>
+<div id="groundwater-availability" class="mb-2"></div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Borehole map</h3><span class="badge badge-outline">Point assets</span></div><div class="card-body flush" style="position:relative;height:430px"><div id="groundwater-map" style="position:absolute;inset:0"></div></div></div>
+    <div class="card"><div class="card-head"><h3>Selected borehole</h3><span id="selected-class"></span></div><div class="card-body" id="borehole-detail"><div class="inspector-empty"><i class="fa fa-hand-pointer-o"></i>Select a borehole to inspect construction, readings and contamination proximity.</div></div></div>
+</div>
+<div class="card mb-2"><div class="card-head"><h3>Borehole registry</h3><span class="sub" id="g-count">—</span></div><div class="card-body flush" id="borehole-table"></div></div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Water level trend</h3><span class="badge badge-teal">m</span></div><div class="card-body"><div class="chart-box" id="gw-trend-wrap"><canvas id="gw-trend"></canvas></div></div></div>
+    <div class="card"><div class="card-head"><h3>Nearby contamination</h3><div class="flex gap-1"><input class="input" id="gw-radius" type="number" value="1000" min="50" max="10000" style="width:100px" /><button class="btn btn-sm" id="gw-radius-apply" type="button">Apply</button></div></div><div class="card-body flush" id="gw-contamination"></div></div>
+</div>
+<div class="card"><div class="card-head"><h3>Pumping tests</h3></div><div class="card-body flush" id="gw-tests-list"></div></div>
+
+<div class="modal-backdrop" id="gw-detail-modal">
+    <div class="modal"><div class="modal-head"><h3>Borehole construction details</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="gw-detail-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Borehole depth (m)</label><input class="input" type="number" step="0.01" name="boreholeDepthM" /></div><div class="field"><label>Yield (m³/h)</label><input class="input" type="number" step="0.01" name="yieldM3PerHour" /></div></div>
+            <div class="field-row"><div class="field"><label>Screen top (m)</label><input class="input" type="number" step="0.01" name="screenTopM" /></div><div class="field"><label>Screen bottom (m)</label><input class="input" type="number" step="0.01" name="screenBottomM" /></div></div>
+            <div class="field-row"><div class="field"><label>Static water level (m)</label><input class="input" type="number" step="0.01" name="staticWaterLevelM" /></div><div class="field"><label>Dynamic water level (m)</label><input class="input" type="number" step="0.01" name="dynamicWaterLevelM" /></div></div>
+            <div class="field"><label>Aquifer name</label><input class="input" name="aquiferName" /></div>
+            <div class="field"><label>Aquifer classification</label><input class="input" name="aquiferClassification" /></div>
+            <label class="checkbox"><input type="checkbox" name="aquiferClassificationInferred" checked /> This classification is inferred, not observed</label>
+            <div class="field-row"><div class="field"><label>Drilled on</label><input class="input" type="date" name="drilledOn" /></div><div class="field"><label>Driller</label><input class="input" name="driller" /></div></div>
+            <div class="field"><label>Construction JSON</label><textarea class="input" name="constructionJson"></textarea></div>
+            <div class="field"><label>Lithology JSON</label><textarea class="input" name="lithologyJson"></textarea></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save details</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="gw-reading-modal">
+    <div class="modal"><div class="modal-head"><h3>Add groundwater reading</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="gw-reading-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Observed at</label><input class="input" type="datetime-local" name="observedAt" required /></div><div class="field"><label>Water level (m)</label><input class="input" type="number" step="0.01" name="waterLevelM" /></div></div>
+            <div class="field"><label>Abstraction (m³ for period)</label><input class="input" type="number" step="0.01" name="abstractionM3" /></div>
+            <div class="field"><label>Notes</label><textarea class="input" name="notes"></textarea></div>
+            <div class="alert alert-warn"><i class="fa fa-info-circle"></i><div>New records are operator-entered observations. Do not record inferred values as measurements.</div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save reading</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="gw-test-modal">
+    <div class="modal"><div class="modal-head"><h3>Add pumping test</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="gw-test-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Tested at</label><input class="input" type="datetime-local" name="testedAt" required /></div><div class="field"><label>Duration (minutes)</label><input class="input" type="number" name="durationMinutes" required /></div></div>
+            <div class="field-row"><div class="field"><label>Pumping rate (m³/h)</label><input class="input" type="number" step="0.01" name="pumpingRateM3PerHour" /></div><div class="field"><label>Drawdown (m)</label><input class="input" type="number" step="0.01" name="drawdownM" /></div></div>
+            <div class="field-row"><div class="field"><label>Recovery (minutes)</label><input class="input" type="number" name="recoveryMinutes" /></div><div class="field"><label>Conducted by</label><input class="input" name="conductedBy" /></div></div>
+            <div class="field"><label>Result JSON</label><textarea class="input" name="resultJson" placeholder='{"method":"constant discharge"}'></textarea></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save test</button></div></form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/groundwater.js"></script>
+}

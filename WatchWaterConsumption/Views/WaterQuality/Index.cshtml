@@ -1,0 +1,112 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Water Quality";
+    var canManage = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.EnvironmentalOfficer));
+}
+<div id="quality-permissions" data-can-manage="@(canManage ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Laboratory &amp; field monitoring</div>
+        <h1>Water quality</h1>
+        <p>Groundwater, surface water, treated and distributed supply. Classification is standard-specific. A missing value or a parameter without an applicable limit is never shown as compliant.</p>
+    </div>
+    <div class="page-actions">
+        @if (canManage)
+        {
+            <button class="btn" id="new-station" type="button"><i class="fa fa-plus"></i> Station</button>
+            <button class="btn" id="new-campaign" type="button"><i class="fa fa-plus"></i> Campaign</button>
+            <button class="btn btn-primary" id="new-sample" type="button"><i class="fa fa-flask"></i> New sample</button>
+        }
+        <a class="btn" href="/api/reports/water-quality?format=Csv"><i class="fa fa-download"></i> CSV</a>
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue"><div class="kpi-label">Sampling stations</div><div class="kpi-value" id="q-stations">—</div><div class="kpi-foot" id="q-campaigns">— campaigns</div></div>
+    <div class="kpi"><div class="kpi-label">Samples</div><div class="kpi-value" id="q-samples">—</div><div class="kpi-foot" id="q-last">Last sample</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Non-compliant</div><div class="kpi-value" id="q-noncompliant">—</div><div class="kpi-foot">Against the configured standard limit</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Insufficient evidence</div><div class="kpi-value" id="q-insufficient">—</div><div class="kpi-foot">Not assessed as safe</div></div>
+</div>
+<div id="quality-availability" class="mb-2"></div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Station status map</h3><span class="badge badge-outline">Latest sample</span></div>
+        <div class="card-body flush" style="position:relative;height:430px"><div id="quality-map" style="position:absolute;inset:0"></div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Result classification</h3></div>
+        <div class="card-body"><div class="chart-box tall"><canvas id="quality-state-chart"></canvas></div><div class="availability mt-2"><i class="fa fa-balance-scale"></i><div id="quality-standard-note">Configured limits are shown in the standards tab.</div></div></div>
+    </div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Parameter trend</h3>
+            <div class="flex gap-1">
+                <select class="select" id="trend-station" style="width:230px"></select>
+                <select class="select" id="trend-parameter" style="width:190px"></select>
+            </div>
+        </div>
+        <div class="card-body"><div class="chart-box" id="quality-trend-wrap"><canvas id="quality-trend"></canvas></div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Contamination hotspots</h3></div>
+        <div class="card-body flush" id="quality-hotspots"></div>
+    </div>
+</div>
+<div class="grid grid-2 mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Recent exceedances</h3><a class="small" href="/api/reports/water-quality?format=Csv">Export</a></div>
+        <div class="card-body flush" id="quality-exceedances"></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Recent samples</h3></div>
+        <div class="card-body flush" id="quality-samples"></div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-head"><h3>Standards in use</h3><span class="sub">Traceable limits; verify against current editions before regulatory use</span></div>
+    <div class="card-body" id="quality-standards"><div class="loading-block"><div class="skeleton"></div></div></div>
+</div>
+
+<div class="modal-backdrop" id="station-modal">
+    <div class="modal"><div class="modal-head"><h3>New sampling station</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="station-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Code</label><input class="input" name="code" required /></div><div class="field"><label>Name</label><input class="input" name="name" required /></div></div>
+            <div class="field"><label>Water source</label><select class="select" name="waterSourceType"><option>Groundwater</option><option>SurfaceWater</option><option>TreatedSupply</option><option>DistributedSupply</option></select></div>
+            <div class="field-row"><div class="field"><label>Latitude</label><input class="input" name="latitude" required /></div><div class="field"><label>Longitude</label><input class="input" name="longitude" required /></div></div>
+            <div class="field"><label>Description</label><textarea class="input" name="description"></textarea></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Create station</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="campaign-modal">
+    <div class="modal"><div class="modal-head"><h3>New sampling campaign</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="campaign-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Code</label><input class="input" name="code" required /></div><div class="field"><label>Name</label><input class="input" name="name" required /></div></div>
+            <div class="field-row"><div class="field"><label>Started on</label><input class="input" type="date" name="startedOn" required /></div><div class="field"><label>Ended on</label><input class="input" type="date" name="endedOn" /></div></div>
+            <div class="field"><label>Laboratory</label><input class="input" name="laboratoryName" /></div>
+            <label class="checkbox"><input type="checkbox" name="laboratoryAccredited" /> Laboratory accreditation is recorded</label>
+            <div class="field mt-1"><label>Accreditation reference</label><input class="input" name="accreditationReference" /></div>
+            <div class="field"><label>Purpose</label><textarea class="input" name="purpose"></textarea></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Create campaign</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="sample-modal">
+    <div class="modal"><div class="modal-head"><h3>New water sample</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="sample-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Sample code</label><input class="input" name="sampleCode" required /></div><div class="field"><label>Sampled at</label><input class="input" type="datetime-local" name="sampledAt" required /></div></div>
+            <div class="field-row"><div class="field"><label>Station</label><select class="select" name="stationId" id="sample-station" required></select></div><div class="field"><label>Campaign</label><select class="select" name="campaignId" id="sample-campaign" required></select></div></div>
+            <div class="field"><label>Sampled by</label><input class="input" name="sampledBy" /></div>
+            <div class="field"><label>Notes</label><textarea class="input" name="notes"></textarea></div>
+            <div class="alert alert-info"><i class="fa fa-info-circle"></i><div>Results are entered individually after the sample is created. The classification uses the selected standard limit for each parameter.</div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Create sample</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="sample-detail-modal">
+    <div class="modal wide"><div class="modal-head"><h3>Sample results</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <div class="modal-body" id="sample-detail-body"></div>
+        <div class="modal-foot"><button class="btn" type="button" data-modal-close>Close</button></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/water-quality.js"></script>
+}

@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = "Overview";
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs">Port Harcourt · Rivers State · Nigeria</div>
+        <h1>Water intelligence overview</h1>
+        <p>Infrastructure, consumption, quality, hydrology, flood exposure and field operations in one operational picture. Every layer and record retains its source and evidence classification.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn" href="/api/reports/data-coverage?format=Csv"><i class="fa fa-download"></i> Coverage CSV</a>
+        <a class="btn btn-primary" asp-controller="Gis" asp-action="Index"><i class="fa fa-globe"></i> Open GIS Explorer</a>
+    </div>
+</div>
+
+<div id="global-availability" class="mb-2"></div>
+
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue">
+        <div class="kpi-icon"><i class="fa fa-wrench"></i></div>
+        <div class="kpi-label">Registered assets</div>
+        <div class="kpi-value" id="kpi-assets">—</div>
+        <div class="kpi-foot" id="kpi-assets-foot">Loading infrastructure…</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-icon"><i class="fa fa-tint"></i></div>
+        <div class="kpi-label">Metered consumption</div>
+        <div class="kpi-value" id="kpi-consumption">—</div>
+        <div class="kpi-foot" id="kpi-consumption-foot">18-month synthetic demonstration series</div>
+    </div>
+    <div class="kpi kpi-amber">
+        <div class="kpi-icon"><i class="fa fa-chain-broken"></i></div>
+        <div class="kpi-label">Non-revenue water</div>
+        <div class="kpi-value" id="kpi-nrw">—</div>
+        <div class="kpi-foot" id="kpi-nrw-foot">DMA water balance</div>
+    </div>
+    <div class="kpi kpi-red">
+        <div class="kpi-icon"><i class="fa fa-flask"></i></div>
+        <div class="kpi-label">Quality exceedances</div>
+        <div class="kpi-value" id="kpi-quality">—</div>
+        <div class="kpi-foot" id="kpi-quality-foot">Non-compliant results</div>
+    </div>
+</div>
+
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head">
+            <div><h3>Operational map</h3><div class="sub">LGA boundaries, waterways, assets and synthetic service sectors</div></div>
+            <span class="badge badge-outline">EPSG:4326</span>
+        </div>
+        <div class="card-body flush" style="position:relative;height:380px">
+            <div id="dashboard-map" style="position:absolute;inset:0"></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Consumption trend</h3><span class="badge badge-teal" id="trend-unit">m³ / month</span></div>
+        <div class="card-body"><div class="chart-box" id="trend-wrap"><canvas id="trend-chart"></canvas></div></div>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Assets by type</h3></div>
+        <div class="card-body"><div class="chart-box short"><canvas id="asset-type-chart"></canvas></div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Water quality states</h3></div>
+        <div class="card-body"><div class="chart-box short"><canvas id="quality-chart"></canvas></div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Data availability</h3></div>
+        <div class="card-body" id="availability-list"></div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-head"><h3>Priority signals</h3><a class="small" asp-controller="FieldOperations" asp-action="Index">All work orders</a></div>
+        <div class="card-body flush" id="priority-signals"></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Recent samples &amp; exceedances</h3><a class="small" asp-controller="WaterQuality" asp-action="Index">Water quality</a></div>
+        <div class="card-body flush" id="recent-quality"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/dashboard.js"></script>
+}

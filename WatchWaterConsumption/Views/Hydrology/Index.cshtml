@@ -1,0 +1,64 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Hydrology";
+    var canManage = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.Hydrologist));
+    var authenticated = User.Identity?.IsAuthenticated == true;
+}
+<div id="hydrology-permissions" data-can-manage="@(canManage ? "true" : "false")" data-authenticated="@(authenticated ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Surface water &amp; drainage</div>
+        <h1>Hydrology and drainage</h1>
+        <p>Mapped OSM waterway centrelines and water bodies, rainfall observations, water level/flow measurements and drainage obstruction reports. Tidal and low-relief limitations are stated explicitly.</p>
+    </div>
+    <div class="page-actions">
+        @if (canManage)
+        {
+            <button class="btn btn-primary" id="sync-rainfall" type="button"><i class="fa fa-cloud-download"></i> Sync rainfall</button>
+        }
+        @if (authenticated)
+        {
+            <button class="btn" id="report-obstruction" type="button"><i class="fa fa-exclamation-triangle"></i> Report obstruction</button>
+        }
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue"><div class="kpi-label">Waterway features</div><div class="kpi-value" id="h-waterways">—</div><div class="kpi-foot">OSM mapped centrelines</div></div>
+    <div class="kpi"><div class="kpi-label">Surface water bodies</div><div class="kpi-value" id="h-bodies">—</div><div class="kpi-foot">OSM polygons</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Monitoring stations</div><div class="kpi-value" id="h-stations">—</div><div class="kpi-foot" id="h-station-types">—</div></div>
+    <div class="kpi kpi-purple"><div class="kpi-label">Observations</div><div class="kpi-value" id="h-observations">—</div><div class="kpi-foot" id="h-last">—</div></div>
+</div>
+<div id="hydrology-availability" class="mb-2"></div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Hydrology map</h3><span class="badge badge-outline">OSM · ODbL</span></div><div class="card-body flush" style="position:relative;height:450px"><div id="hydrology-map" style="position:absolute;inset:0"></div></div></div>
+    <div class="card"><div class="card-head"><h3>Rainfall — live</h3><span class="badge badge-teal" id="rain-source">Open-Meteo</span></div><div class="card-body"><div id="rain-status"></div><div class="chart-box short"><canvas id="rain-chart"></canvas></div><div class="tiny muted mt-1" id="rain-note"></div></div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Observations</h3><div class="flex gap-1"><select class="select" id="hyd-station" style="width:250px"></select><select class="select" id="hyd-parameter" style="width:170px"><option>WaterLevelM</option><option>RainfallMm</option><option>StreamflowM3s</option><option>TideLevelM</option></select></div></div>
+        <div class="card-body"><div class="chart-box" id="hyd-trend-wrap"><canvas id="hyd-trend"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Drainage obstructions</h3><span class="sub" id="obs-count">—</span></div><div class="card-body flush" id="obstruction-list"></div></div>
+</div>
+<div class="grid grid-2">
+    <div class="card"><div class="card-head"><h3>Observation records</h3></div><div class="card-body flush" id="observation-list"></div></div>
+    <div class="card"><div class="card-head"><h3>Method &amp; limitations</h3></div><div class="card-body">
+        <div class="alert alert-warn"><i class="fa fa-exclamation-triangle"></i><div>Port Harcourt is a low-relief, tidal and coastal environment. A basic DEM-derived flow network would not represent tidal drainage and has not been used. Waterway geometry is mapped OSM centrelines, not an engineering drainage model.</div></div>
+        <div class="small muted">Catchment boundaries require a validated hydrological dataset or delineation workflow. No catchment geometry is configured in this deployment; catchments can be registered as operational areas by an authorised operator.</div>
+    </div></div>
+</div>
+
+<div class="modal-backdrop" id="obstruction-modal">
+    <div class="modal"><div class="modal-head"><h3>Report drainage obstruction</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="obstruction-form"><div class="modal-body">
+            <div class="field"><label>Waterway / drain</label><input class="input" name="waterwayName" required /></div>
+            <div class="field"><label>Description</label><textarea class="input" name="description" required></textarea></div>
+            <div class="field-row"><div class="field"><label>Latitude</label><input class="input" name="latitude" /></div><div class="field"><label>Longitude</label><input class="input" name="longitude" /></div></div>
+            <div class="field"><label>Severity</label><select class="select" name="severity"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Submit report</button></div></form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/hydrology.js"></script>
+}

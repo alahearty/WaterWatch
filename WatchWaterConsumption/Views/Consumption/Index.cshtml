@@ -1,0 +1,116 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Consumption";
+    var canImport = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.GisAnalyst));
+    var canCorrect = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.GisAnalyst) || User.IsInRole(Roles.WaterUtilityEngineer));
+}
+<div id="consumption-permissions" data-can-correct="@(canCorrect ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Demand &amp; metering</div>
+        <h1>Consumption and demand</h1>
+        <p>Consumption is calculated only from consecutive cumulative meter readings. Rollovers are explicit, estimated readings are labelled, and unattributed consumption is never assigned to a zone.</p>
+    </div>
+    <div class="page-actions">
+        @if (canImport)
+        {
+            <button class="btn btn-primary" id="open-import" type="button"><i class="fa fa-upload"></i> Import readings</button>
+        }
+        <a class="btn" href="/api/reports/consumption?format=Csv"><i class="fa fa-download"></i> CSV report</a>
+    </div>
+</div>
+<div class="card mb-2">
+    <div class="card-body">
+        <div class="toolbar">
+            <div class="btn-group" id="consumption-dimension">
+                <button type="button" data-dim="lga" class="active">LGA</button>
+                <button type="button" data-dim="servicezone">Service zone</button>
+                <button type="button" data-dim="dma">DMA</button>
+                <button type="button" data-dim="category">Consumer category</button>
+            </div>
+            <div class="spacer"></div>
+            <label class="small muted" for="cons-from">From</label><input class="input" type="date" id="cons-from" style="width:150px" />
+            <label class="small muted" for="cons-to">To</label><input class="input" type="date" id="cons-to" style="width:150px" />
+            <button class="btn" id="cons-apply" type="button"><i class="fa fa-filter"></i> Apply</button>
+            <button class="btn" id="cons-reset" type="button">All time</button>
+        </div>
+        <div class="toolbar mt-2" style="border-top:1px solid #edf2f7;padding-top:10px">
+            <span class="badge badge-outline"><i class="fa fa-play"></i> Temporal playback</span>
+            <select class="select" id="cons-playback-month" style="width:180px"></select>
+            <button class="btn btn-sm" id="cons-play" type="button"><i class="fa fa-play"></i> Play</button>
+            <span class="small muted" id="cons-play-status">Select a month to animate the choropleth and KPIs.</span>
+        </div>
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi"><div class="kpi-label">Total consumption</div><div class="kpi-value" id="cons-total">—</div><div class="kpi-foot" id="cons-total-foot">m³ · calculated intervals</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-label">Total litres</div><div class="kpi-value" id="cons-litres">—</div><div class="kpi-foot">1 m³ = 1,000 L = 1 kL</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Estimated share</div><div class="kpi-value" id="cons-estimated">—</div><div class="kpi-foot">Estimated readings in calculated consumption</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Anomalies</div><div class="kpi-value" id="cons-anomalies">—</div><div class="kpi-foot">&gt;3× meter median and &gt;10 m³</div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Consumption choropleth</h3><span class="badge badge-outline" id="choropleth-dim">LGA</span></div>
+        <div class="card-body flush" style="position:relative;height:420px"><div id="consumption-map" style="position:absolute;inset:0"></div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Monthly trend</h3><span class="badge badge-teal">m³ / month</span></div>
+        <div class="card-body"><div class="chart-box" id="cons-trend-wrap"><canvas id="cons-trend"></canvas></div></div>
+    </div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Aggregates</h3><span class="sub" id="cons-agg-sub">—</span></div>
+        <div class="card-body flush" id="cons-aggregates"></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>High-consumption anomalies</h3></div>
+        <div class="card-body flush" id="cons-anomaly-list"></div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-head">
+        <div class="tab-head" style="display:flex;gap:12px;align-items:center"><h3>Registry</h3>
+            <div class="btn-group" id="registry-tabs">
+                <button type="button" data-reg="accounts" class="active">Consumer accounts</button>
+                <button type="button" data-reg="meters">Meters</button>
+                <button type="button" data-reg="readings">Readings</button>
+            </div>
+        </div>
+        <div class="search-inline"><i class="fa fa-search"></i><input class="input" id="registry-search" placeholder="Search account or meter…" /></div>
+    </div>
+    <div class="card-body flush" id="registry-table"></div>
+</div>
+
+<div class="modal-backdrop" id="import-modal">
+    <div class="modal wide">
+        <div class="modal-head"><h3>Import meter readings</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <div class="modal-body">
+            <div class="alert alert-info mb-2"><i class="fa fa-info-circle"></i><div>CSV columns: <code>meter_serial</code>, <code>reading_date</code> (yyyy-MM-dd), <code>reading_m3</code>; optional <code>reading_type</code> (Observed, Estimated, Corrected, Rollover), <code>notes</code>, <code>classification</code>. Duplicate meter/date rows are rejected. Cumulative readings must increase unless a rollover is explicitly declared.</div></div>
+            <div class="field"><label>CSV file</label><input class="input" type="file" id="readings-file" accept=".csv,text/csv" /></div>
+            <label class="checkbox"><input type="checkbox" id="readings-commit" /> Commit accepted rows to the database</label>
+            <div class="field-hint">If unchecked, the import is validated and previewed only.</div>
+            <div id="import-result" class="mt-2"></div>
+        </div>
+        <div class="modal-foot"><button class="btn" type="button" data-modal-close>Close</button><button class="btn btn-primary" id="run-import" type="button"><i class="fa fa-upload"></i> Validate / import</button></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="correct-modal">
+    <div class="modal">
+        <div class="modal-head"><h3>Correct reading</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="correct-form">
+            <div class="modal-body">
+                <div class="alert alert-warn"><i class="fa fa-info-circle"></i><div>A correction preserves the previous value and reason on the record. The reading becomes a corrected observation and the change is audited.</div></div>
+                <input type="hidden" id="correct-id" />
+                <div class="field"><label>Corrected cumulative reading (m³)</label><input class="input" id="correct-value" type="number" step="0.001" min="0" required /></div>
+                <div class="field"><label>Reason</label><textarea class="input" id="correct-reason" required maxlength="500"></textarea></div>
+            </div>
+            <div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save correction</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/consumption.js"></script>
+}

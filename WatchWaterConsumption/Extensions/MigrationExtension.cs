@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WatchWaterConsumption;
+using WaterWatch.Data;
 
 namespace WatchWaterConsumption.Extensions
 {

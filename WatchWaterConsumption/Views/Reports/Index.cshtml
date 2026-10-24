@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Reports";
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs">Reporting &amp; exports</div>
+        <h1>Reports</h1>
+        <p>Reports contain the records selected by the current filters and record the generation metadata. CSV and Excel carry the full selected dataset; PDF is limited to 300 rows with a truncation note.</p>
+    </div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Generate a report</h3></div>
+        <div class="card-body">
+            <div class="field-row">
+                <div class="field"><label>Report</label><select class="select" id="report-type"></select></div>
+                <div class="field"><label>Format</label><select class="select" id="report-format"><option value="Csv">CSV</option><option value="Xlsx">Excel (XLSX)</option><option value="Pdf">PDF</option></select></div>
+            </div>
+            <div class="field-row"><div class="field"><label>From</label><input class="input" type="date" id="report-from" /></div><div class="field"><label>To</label><input class="input" type="date" id="report-to" /></div></div>
+            <div class="field-row"><div class="field"><label>Search / filter</label><input class="input" id="report-search" placeholder="Optional search" /></div><div class="field"><label>Consumption dimension</label><select class="select" id="report-dimension"><option value="">Default (LGA)</option><option value="adminarea">LGA / admin area</option><option value="servicezone">Service zone</option><option value="dma">DMA</option><option value="category">Consumer category</option></select></div></div>
+            <button class="btn btn-primary" id="generate-report" type="button"><i class="fa fa-file-text-o"></i> Generate &amp; download</button>
+            <div id="report-result" class="mt-2"></div>
+        </div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Report types</h3></div><div class="card-body" id="report-types"><div class="loading-block"><div class="skeleton"></div><div class="skeleton"></div></div></div></div>
+</div>
+<div class="card"><div class="card-head"><h3>Recent report jobs</h3><span class="sub">Audit of generated reports</span></div><div class="card-body flush" id="report-jobs"></div></div>
+
+@section Scripts {
+    <script src="~/js/pages/reports.js"></script>
+}

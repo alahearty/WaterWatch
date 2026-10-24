@@ -1,0 +1,67 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Leakage & NRW";
+    var canManage = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.WaterUtilityEngineer));
+    var canField = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.FieldInspector) || User.IsInRole(Roles.WaterUtilityEngineer));
+}
+<div id="nrw-permissions" data-can-manage="@(canManage ? "true" : "false")" data-can-field="@(canField ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Water balance &amp; leakage</div>
+        <h1>Non-revenue water</h1>
+        <p>NRW is system input minus billed authorised consumption. Apparent and real losses are shown only where each component is evidenced; the remainder stays unallocated rather than being called leakage.</p>
+    </div>
+    <div class="page-actions">
+        @if (canManage) { <button class="btn btn-primary" id="new-balance" type="button"><i class="fa fa-plus"></i> New water balance</button> }
+        @if (canField) { <button class="btn" id="new-leak" type="button"><i class="fa fa-exclamation-triangle"></i> Report leak</button> }
+        <a class="btn" href="/api/reports/nrw?format=Csv"><i class="fa fa-download"></i> CSV</a>
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-amber"><div class="kpi-label">NRW</div><div class="kpi-value" id="nrw-percent">—</div><div class="kpi-foot" id="nrw-m3">— m³</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-label">System input</div><div class="kpi-value" id="nrw-input">—</div><div class="kpi-foot">m³ in DMA balances</div></div>
+    <div class="kpi"><div class="kpi-label">Billed authorised</div><div class="kpi-value" id="nrw-billed">—</div><div class="kpi-foot">m³</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Open leaks</div><div class="kpi-value" id="nrw-leaks">—</div><div class="kpi-foot" id="nrw-leak-loss">— m³/h estimated</div></div>
+</div>
+<div id="nrw-availability" class="mb-2"></div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>DMA map</h3><span class="badge badge-outline">Latest NRW</span></div><div class="card-body flush" style="position:relative;height:440px"><div id="nrw-map" style="position:absolute;inset:0"></div></div></div>
+    <div class="card"><div class="card-head"><h3>NRW trend</h3><span class="badge badge-teal">% / month</span></div><div class="card-body"><div class="chart-box"><canvas id="nrw-trend"></canvas></div></div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Water balances</h3><span class="sub" id="nrw-balance-count">—</span></div><div class="card-body flush" id="nrw-balances"></div></div>
+    <div class="card"><div class="card-head"><h3>Pressure anomalies</h3></div><div class="card-body flush" id="nrw-pressure"></div></div>
+</div>
+<div class="grid grid-main">
+    <div class="card"><div class="card-head"><h3>Leak incidents</h3></div><div class="card-body flush" id="nrw-leaks-list"></div></div>
+    <div class="card"><div class="card-head"><h3>Leak hotspot ranking</h3></div><div class="card-body flush" id="nrw-hotspots"></div></div>
+</div>
+
+<div class="modal-backdrop" id="balance-modal">
+    <div class="modal wide"><div class="modal-head"><h3>New DMA water balance</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="balance-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>DMA</label><select class="select" name="dmaId" id="balance-dma" required></select></div><div class="field"><label>Method</label><input class="input" name="method" placeholder="Metered DMA balance" /></div></div>
+            <div class="field-row"><div class="field"><label>Period start</label><input class="input" type="date" name="periodStart" required /></div><div class="field"><label>Period end</label><input class="input" type="date" name="periodEnd" required /></div></div>
+            <div class="field-row"><div class="field"><label>System input (m³)</label><input class="input" type="number" step="0.001" name="inputVolumeM3" required /></div><div class="field"><label>Billed authorised (m³)</label><input class="input" type="number" step="0.001" name="billedVolumeM3" required /></div></div>
+            <div class="field-row"><div class="field"><label>Unbilled authorised (m³)</label><input class="input" type="number" step="0.001" name="unbilledAuthorisedM3" /></div><div class="field"><label>Minimum night flow (m³/h)</label><input class="input" type="number" step="0.001" name="minimumNightFlowM3PerHour" /></div></div>
+            <div class="field-row"><div class="field"><label>Apparent losses (m³)</label><input class="input" type="number" step="0.001" name="apparentLossesM3" /></div><div class="field"><label>Real losses (m³)</label><input class="input" type="number" step="0.001" name="realLossesM3" /></div></div>
+            <div class="field"><label>Uncertainty / evidence notes</label><textarea class="input" name="uncertaintyNotes"></textarea></div>
+            <div class="alert alert-info"><i class="fa fa-info-circle"></i><div>Leave apparent/real losses blank unless they are evidenced. The application will show the unallocated remainder and will not label it physical leakage.</div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save balance</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="leak-modal">
+    <div class="modal"><div class="modal-head"><h3>Report leak incident</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="leak-form"><div class="modal-body">
+            <div class="field"><label>Description</label><textarea class="input" name="description" required></textarea></div>
+            <div class="field"><label>DMA</label><select class="select" name="dmaId" id="leak-dma"><option value="">Not assigned</option></select></div>
+            <div class="field-row"><div class="field"><label>Latitude</label><input class="input" name="latitude" /></div><div class="field"><label>Longitude</label><input class="input" name="longitude" /></div></div>
+            <div class="field-row"><div class="field"><label>Severity</label><select class="select" name="severity"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></div><div class="field"><label>Estimated loss (m³/h)</label><input class="input" type="number" step="0.01" name="estimatedLossM3PerHour" /></div></div>
+            <div class="alert alert-warn"><i class="fa fa-info-circle"></i><div>Estimated loss is recorded as an estimate, not a measured physical loss.</div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Report leak</button></div></form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/nrw.js"></script>
+}

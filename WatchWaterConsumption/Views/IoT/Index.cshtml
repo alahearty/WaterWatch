@@ -1,0 +1,74 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "IoT Monitoring";
+    var canManage = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.WaterUtilityEngineer) || User.IsInRole(Roles.Hydrologist));
+}
+<div id="iot-permissions" data-can-manage="@(canManage ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Real-time monitoring</div>
+        <h1>IoT monitoring</h1>
+        <p>Pressure, flow, reservoir level, water quality, rainfall and pump telemetry. Device API keys authenticate ingestion. Synthetic demonstration readings are visibly labelled and never silently mixed with observations.</p>
+    </div>
+    <div class="page-actions">
+        @if (canManage) { <button class="btn" id="new-device" type="button"><i class="fa fa-plus"></i> Register device</button><button class="btn" id="new-rule" type="button"><i class="fa fa-bell"></i> Alert rule</button> }
+        <button class="btn" id="escalate-alerts" type="button"><i class="fa fa-level-up"></i> Escalate due</button>
+    </div>
+</div>
+<div class="flex-between mb-2">
+    <div id="iot-availability" style="flex:1;margin-right:12px"></div>
+    <div class="badge badge-outline" id="signalr-status">Realtime: disconnected</div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi"><div class="kpi-label">Devices</div><div class="kpi-value" id="iot-devices">—</div><div class="kpi-foot" id="iot-demo">— demo devices</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-label">Active</div><div class="kpi-value" id="iot-active">—</div><div class="kpi-foot" id="iot-offline">— offline</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Readings</div><div class="kpi-value" id="iot-readings">—</div><div class="kpi-foot" id="iot-last">No readings</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Open alerts</div><div class="kpi-value" id="iot-alerts">—</div><div class="kpi-foot">Threshold rules</div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Device history</h3><div class="flex gap-1"><select class="select" id="iot-device" style="width:220px"></select><select class="select" id="iot-parameter" style="width:150px"></select><select class="select" id="iot-window" style="width:130px"><option value="6">6 hours</option><option value="24">24 hours</option><option value="168">7 days</option><option value="720">30 days</option></select></div></div>
+        <div class="card-body"><div class="chart-box" id="iot-chart-wrap"><canvas id="iot-chart"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Live event stream</h3><span class="badge badge-teal" id="live-count">0</span></div><div class="card-body" id="iot-live"><div class="tiny muted">Live readings appear here when the SignalR connection is active. Demonstration readings are labelled SYNTHETIC.</div></div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Devices</h3><span class="sub" id="iot-device-count">—</span></div><div class="card-body flush" id="iot-device-list"></div></div>
+    <div class="card"><div class="card-head"><h3>Alerts</h3><span class="sub" id="iot-alert-count">—</span></div><div class="card-body flush" id="iot-alert-list"></div></div>
+</div>
+<div class="card"><div class="card-head"><h3>Alert rules</h3></div><div class="card-body flush" id="iot-rules"><div class="loading-block"><div class="skeleton"></div></div></div></div>
+
+<div class="modal-backdrop" id="device-modal">
+    <div class="modal"><div class="modal-head"><h3>Register monitoring device</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="device-form"><div class="modal-body">
+            <div class="field-row"><div class="field"><label>Device code</label><input class="input" name="deviceCode" required /></div><div class="field"><label>Name</label><input class="input" name="name" required /></div></div>
+            <div class="field"><label>Device type</label><select class="select" name="deviceType"><option>WaterLevel</option><option>Flow</option><option>Pressure</option><option>WaterQuality</option><option>RainGauge</option><option>PumpTelemetry</option><option>ReservoirLevel</option></select></div>
+            <div class="field-row"><div class="field"><label>Latitude</label><input class="input" name="latitude" /></div><div class="field"><label>Longitude</label><input class="input" name="longitude" /></div></div>
+            <div class="field-row"><div class="field"><label>Offline threshold (minutes)</label><input class="input" type="number" name="offlineThresholdMinutes" value="180" /></div><div class="field"><label>Firmware</label><input class="input" name="firmwareVersion" /></div></div>
+            <div class="alert alert-warn"><i class="fa fa-key"></i><div>The API key is shown once after creation. It must be sent in the <code>X-Device-Key</code> header. Store it securely.</div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Create device</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="device-key-modal">
+    <div class="modal"><div class="modal-head"><h3>Device credentials</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <div class="modal-body"><div class="alert alert-warn"><i class="fa fa-key"></i><div>This key is displayed once. Store it in the device's secure configuration.</div></div><pre class="code-block" id="device-key"></pre><button class="btn btn-sm" id="copy-key" type="button">Copy key</button></div>
+        <div class="modal-foot"><button class="btn" type="button" data-modal-close>Close</button></div>
+    </div>
+</div>
+<div class="modal-backdrop" id="rule-modal">
+    <div class="modal"><div class="modal-head"><h3>Create alert rule</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="rule-form"><div class="modal-body">
+            <div class="field"><label>Rule name</label><input class="input" name="name" required /></div>
+            <div class="field-row"><div class="field"><label>Device type</label><select class="select" name="deviceType"><option value="">Any</option><option>Pressure</option><option>Flow</option><option>WaterLevel</option><option>ReservoirLevel</option><option>WaterQuality</option><option>RainGauge</option></select></div><div class="field"><label>Parameter</label><input class="input" name="parameter" placeholder="pressure_bar" required /></div></div>
+            <div class="field-row"><div class="field"><label>Operator</label><select class="select" name="operator"><option>GreaterThan</option><option>LessThan</option><option>OutsideRange</option></select></div><div class="field"><label>Severity</label><select class="select" name="severity"><option>High</option><option>Medium</option><option>Critical</option><option>Low</option></select></div></div>
+            <div class="field-row"><div class="field"><label>Threshold</label><input class="input" type="number" step="0.001" name="threshold" /></div><div class="field"><label>Second threshold (range)</label><input class="input" type="number" step="0.001" name="threshold2" /></div></div>
+            <div class="field"><label>Escalation (minutes)</label><input class="input" type="number" name="escalationMinutes" value="60" /></div>
+            <div class="field"><label>Description</label><textarea class="input" name="description"></textarea></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Create rule</button></div></form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/vendor/signalr.min.js"></script>
+    <script src="~/js/pages/iot.js"></script>
+}

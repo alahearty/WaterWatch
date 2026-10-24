@@ -1,0 +1,35 @@
+@model WaterWatch.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+<div class="login-wrap">
+    <div class="login-card">
+        <div class="login-head">
+            <div class="flex gap-1 mb-2"><span class="brand-mark">WW</span><div><h2 style="margin:0">WaterWatch</h2><p>Port Harcourt spatial water intelligence</p></div></div>
+        </div>
+        <div class="login-body">
+            <form method="post" asp-controller="Account" asp-action="Login">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "flex" : "none")"></div>
+                <div class="field"><label asp-for="Email">Email</label><input class="input" asp-for="Email" type="email" autocomplete="username" required /></div>
+                <div class="field"><label asp-for="Password">Password</label><input class="input" asp-for="Password" type="password" autocomplete="current-password" required /></div>
+                <label class="checkbox mb-2"><input asp-for="RememberMe" /> Remember me</label>
+                <button class="btn btn-primary" type="submit" style="width:100%"><i class="fa fa-sign-in"></i> Sign in</button>
+            </form>
+            @if (Context.RequestServices.GetRequiredService<IConfiguration>().GetValue("WaterWatch:DemoMode", false))
+            {
+                <div class="demo-accounts">
+                    <strong>Demonstration accounts</strong> (development only, password <code>WaterWatch#2026</code>):<br />
+                    <code>admin@waterwatch.local</code> Administrator ·
+                    <code>engineer@waterwatch.local</code> Water Utility Engineer ·
+                    <code>hydrologist@waterwatch.local</code> Hydrologist ·
+                    <code>environment@waterwatch.local</code> Environmental Officer ·
+                    <code>inspector@waterwatch.local</code> Field Inspector ·
+                    <code>viewer@waterwatch.local</code> Management Viewer.
+                    <div class="mt-1">Change or remove these accounts before any production use.</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

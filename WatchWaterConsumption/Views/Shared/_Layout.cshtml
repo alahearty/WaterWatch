@@ -1,81 +1,132 @@
-﻿<!DOCTYPE html>
+﻿@using WaterWatch.Security
+@inject IConfiguration Configuration
+@{
+    var active = ViewData["Active"] as string ?? "";
+    var demoMode = Configuration.GetValue("WaterWatch:DemoMode", false);
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var displayName = User.Identity?.Name ?? "";
+    var initials = string.IsNullOrWhiteSpace(displayName) ? "?" : string.Join("", displayName.Split(new[] { '@', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries).Take(2).Select(s => char.ToUpperInvariant(s[0])));
+    var fullHeight = ViewData["FullHeight"] != null;
+    string Active(string key) => string.Equals(active, key, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WaterWatch</title>
-
-    <link rel="stylesheet" href="~/app/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="~/app/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="~/app/Ionicons/css/ionicons.min.css">
-    <link rel="stylesheet" href="~/app/admin/css/AdminLTE.min.css">
-    <link rel="stylesheet" href="~/app/admin/css/skins/_all-skins.min.css">
-    <link rel="stylesheet" href="~/app/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css">
-
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-
+    <meta name="theme-color" content="#0b2239" />
+    <title>@ViewData["Title"] · WaterWatch</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/app/font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="~/app/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="~/vendor/leaflet-draw/leaflet.draw.css" />
+    <link rel="stylesheet" href="~/css/waterwatch.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700;800&display=swap" />
+    @await RenderSectionAsync("Head", required: false)
 </head>
-<body class="hold-transition skin-green sidebar-mini">
-    <div class="wrapper">
-        <header class="main-header">
-            <!-- Logo -->
-            <a class="logo" href="#" style="background: #1e282c;">
-                <!-- mini logo for sidebar mini 50x50 pixels -->
-                <span class="logo-mini"><b>W</b>W</span>
-                <!-- logo for regular state and mobile devices -->
-                <span class="logo-lg"><b style="color:green">WATER</b>WATCH</span>
-            </a>
-            <!-- Header Navbar: style can be found in header.less -->
-            
-        </header>
-        <aside class="main-sidebar">
-            <!-- sidebar: style can be found in sidebar.less -->
-            <section class="sidebar">
-            
-                <!-- sidebar menu: : style can be found in sidebar.less -->
-                <ul class="sidebar-menu" data-widget="tree">
-                    <li class="header">MAPS NAVIGATION</li>
-                    <li class="treeview active">
-                    <a href="#">
-                        <i class="fa fa-globe"></i> <span>Maps</span>
-                        <span class="pull-right-container">
-                        <i class="fa fa-angle-left pull-right"></i>
-                        </span>
-                    </a>
-                    <ul class="treeview-menu">
-                        <li><a asp-area="" asp-controller="Home" asp-action="Index"><i class="fa fa-map"></i> Water Consumption (2017)</a></li>
-                    </ul>
-                    </li>
-                </ul>
-            </section>
-            <!-- /.sidebar -->
-        </aside>
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-
-            <!-- Main content -->
-            <section class="content-fluid">
-                @RenderBody()
-            </section>
-            <!-- /.content -->
+<body data-demo="@(demoMode ? "true" : "false")" data-authenticated="@(isAuthenticated ? "true" : "false")">
+<div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+        <a class="sidebar-brand" asp-controller="Dashboard" asp-action="Index" style="text-decoration:none">
+            <span class="brand-mark">WW</span>
+            <span class="brand-text"><strong>WATERWATCH</strong><span>Port Harcourt Intelligence</span></span>
+        </a>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Situational awareness</div>
+            <a class="@Active("Dashboard")" asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Overview</a>
+            <a class="@Active("Gis")" asp-controller="Gis" asp-action="Index"><i class="fa fa-globe"></i> GIS Explorer</a>
+            <a class="@Active("Infrastructure")" asp-controller="Infrastructure" asp-action="Index"><i class="fa fa-wrench"></i> Infrastructure</a>
+            <div class="nav-section">Water resources</div>
+            <a class="@Active("Consumption")" asp-controller="Consumption" asp-action="Index"><i class="fa fa-tint"></i> Consumption</a>
+            <a class="@Active("WaterQuality")" asp-controller="WaterQuality" asp-action="Index"><i class="fa fa-flask"></i> Water Quality</a>
+            <a class="@Active("Hydrology")" asp-controller="Hydrology" asp-action="Index"><i class="fa fa-area-chart"></i> Hydrology</a>
+            <a class="@Active("Flood")" asp-controller="Flood" asp-action="Index"><i class="fa fa-warning"></i> Flood Intelligence</a>
+            <a class="@Active("Groundwater")" asp-controller="Groundwater" asp-action="Index"><i class="fa fa-arrow-down"></i> Groundwater</a>
+            <a class="@Active("Nrw")" asp-controller="Nrw" asp-action="Index"><i class="fa fa-chain-broken"></i> Leakage &amp; NRW</a>
+            <div class="nav-section">Monitoring &amp; analytics</div>
+            <a class="@Active("RemoteSensing")" asp-controller="RemoteSensing" asp-action="Index"><i class="fa fa-satellite"></i> Remote Sensing</a>
+            <a class="@Active("IoT")" asp-controller="IoT" asp-action="Index"><i class="fa fa-wifi"></i> IoT Monitoring</a>
+            <a class="@Active("Analytics")" asp-controller="Analytics" asp-action="Index"><i class="fa fa-cubes"></i> Spatial Analytics</a>
+            <a class="@Active("Forecasting")" asp-controller="Forecasting" asp-action="Index"><i class="fa fa-line-chart"></i> Forecasting</a>
+            <div class="nav-section">Operations &amp; governance</div>
+            <a class="@Active("FieldOperations")" asp-controller="FieldOperations" asp-action="Index"><i class="fa fa-clipboard"></i> Field Operations</a>
+            <a class="@Active("Reports")" asp-controller="Reports" asp-action="Index"><i class="fa fa-file-text-o"></i> Reports</a>
+            <a class="@Active("Administration")" asp-controller="Administration" asp-action="Index"><i class="fa fa-cogs"></i> Administration</a>
+        </nav>
+        <div class="sidebar-footer">
+            <strong>Port Harcourt City LGA · Obio/Akpor LGA</strong><br />
+            Rivers State, Nigeria · EPSG:4326
+            @if (demoMode)
+            {
+                <div class="mt-1"><span class="badge-demo"><i class="fa fa-flask"></i> DEMO MODE</span></div>
+            }
         </div>
+    </aside>
+
+    <div class="main-column">
+        <header class="topbar">
+            <button class="topbar-toggle" type="button" aria-label="Toggle navigation"><i class="fa fa-bars"></i></button>
+            <div class="geo-context"><i class="fa fa-map-marker"></i> Port Harcourt · Rivers State</div>
+            <div class="global-search">
+                <i class="fa fa-search search-icon"></i>
+                <input id="global-search-input" type="search" autocomplete="off" placeholder="Search assets, stations, work orders or an address…" aria-label="Global search" />
+                <div id="global-search-results" class="search-results"></div>
+            </div>
+            <div class="topbar-actions">
+                @if (demoMode)
+                {
+                    <span class="badge-demo d-none d-md-inline-flex"><i class="fa fa-flask"></i> DEMO DATA</span>
+                }
+                <div class="dropdown">
+                    <button id="notification-button" class="icon-btn notification-btn" type="button" aria-label="Notifications">
+                        <i class="fa fa-bell-o"></i><span class="dot"></span>
+                    </button>
+                    <div id="notification-panel" class="dropdown-panel"></div>
+                </div>
+                @if (isAuthenticated)
+                {
+                    <div class="dropdown">
+                        <button id="user-menu-button" class="user-chip" type="button">
+                            <span class="avatar">@initials</span>
+                            <span class="user-meta"><strong>@displayName</strong><span>@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "User")</span></span>
+                            <i class="fa fa-angle-down" style="color:#8a9aab"></i>
+                        </button>
+                        <div id="user-menu-panel" class="dropdown-panel" style="width:260px">
+                            <h4>Account</h4>
+                            <a class="notification" asp-controller="Account" asp-action="Profile"><span class="n-icon"><i class="fa fa-user"></i></span><span><strong>Profile</strong><span>Roles and organisation</span></span></a>
+                            <a class="notification" asp-controller="Administration" asp-action="Index"><span class="n-icon"><i class="fa fa-cogs"></i></span><span><strong>Administration</strong><span>Users, audit and imports</span></span></a>
+                            <form method="post" asp-controller="Account" asp-action="Logout" class="mt-1">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-danger" type="submit" style="width:100%"><i class="fa fa-sign-out"></i> Sign out</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Login"><i class="fa fa-sign-in"></i> Sign in</a>
+                }
+            </div>
+        </header>
+
+        <main class="@(fullHeight ? "workspace workspace-full" : "workspace")" id="workspace">
+            @RenderBody()
+        </main>
+        @if (!fullHeight)
+        {
+            <footer class="app-footer">
+                WaterWatch · Port Harcourt spatial water intelligence · Source and classification metadata are retained on every layer and record.
+            </footer>
+        }
     </div>
-    <!-- END OF WRAPPER -->
-    
-    <!-- Scripts -->
-    <script src="~/app/jquery-ui/jquery-ui.min.js"></script>
-    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-    <script>
-    $.widget.bridge('uibutton', $.ui.button);
-    </script>
-    <script th:src="~/app/bootstrap/dist/js/bootstrap.min.js}"></script>
-    <script th:src="~/app/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.all.min.js}"></script>
-    <script th:src="~/app/jquery-slimscroll/jquery.slimscroll.min.js}"></script>
-    <script th:src="~/app/fastclick/lib/fastclick.js}"></script>
-    <script th:src="~/app/dist/js/adminlte.min.js}"></script>
-    <script th:src="~/app/dist/js/demo.js}"></script> 
-    
-    @await RenderSectionAsync("Scripts", required: false)
+</div>
+
+<form id="csrf-form" hidden>@Html.AntiForgeryToken()</form>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/app/leaflet/leaflet.js"></script>
+<script src="~/vendor/leaflet-draw/leaflet.draw.js"></script>
+<script src="~/vendor/chart.umd.min.js"></script>
+<script src="~/js/waterwatch-core.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

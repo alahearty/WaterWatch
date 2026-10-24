@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Sampling station";
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-controller="WaterQuality" asp-action="Index">Water quality</a> · Sampling station</div>
+        <h1 id="station-name">Loading station…</h1>
+        <p id="station-subtitle">—</p>
+    </div>
+    <div class="page-actions"><a class="btn" asp-controller="WaterQuality" asp-action="Index"><i class="fa fa-arrow-left"></i> Back</a></div>
+</div>
+<div id="station-root" data-station-id="@ViewData["StationId"]" hidden></div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Location</h3></div><div class="card-body flush" style="position:relative;height:380px"><div id="station-map" style="position:absolute;inset:0"></div></div></div>
+    <div class="card"><div class="card-head"><h3>Station record</h3><span id="station-class"></span></div><div class="card-body" id="station-facts"></div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Parameter trend</h3><select class="select" id="station-parameter" style="width:200px"></select></div>
+        <div class="card-body"><div class="chart-box" id="station-trend-wrap"><canvas id="station-trend"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Hotspot signals</h3></div><div class="card-body flush" id="station-hotspots"></div></div>
+</div>
+<div class="card"><div class="card-head"><h3>Samples</h3><span class="sub" id="station-sample-count"></span></div><div class="card-body flush" id="station-samples"></div></div>
+
+@section Scripts {
+    <script src="~/js/pages/water-quality-station.js"></script>
+}

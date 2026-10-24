@@ -1,0 +1,162 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "GIS Explorer";
+    var canEdit = User.Identity?.IsAuthenticated == true &&
+                  (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.GisAnalyst) || User.IsInRole(Roles.WaterUtilityEngineer));
+}
+<div class="gis-layout" id="gis-layout" data-can-edit="@(canEdit ? "true" : "false")">
+    <aside class="gis-panel left">
+        <div class="gis-panel-head">
+            <h3><i class="fa fa-search" style="color:#0f8b8d"></i> Find &amp; filter</h3>
+            <button class="close-x" type="button" id="collapse-layers" title="Collapse panel"><i class="fa fa-angle-left"></i></button>
+        </div>
+        <div class="gis-panel-body">
+            <div class="field">
+                <label for="map-search-input">Place or feature</label>
+                <div class="map-search search-inline">
+                    <i class="fa fa-search"></i>
+                    <input class="input" id="map-search-input" autocomplete="off" placeholder="e.g. Diobu, Woji, hospital" />
+                    <div class="map-search-results" id="map-search-results"></div>
+                </div>
+                <div class="field-hint">Local registry + OSM Nominatim (bounded to the study area).</div>
+            </div>
+            <div class="field">
+                <label for="coordinate-input">Coordinate search</label>
+                <div class="flex gap-1">
+                    <input class="input" id="coordinate-input" placeholder="4.8156, 7.0498" />
+                    <button class="btn btn-sm btn-navy" id="coordinate-go" type="button">Go</button>
+                </div>
+                <div class="field-hint">Latitude, longitude in WGS84. The map cursor position is shown bottom-right.</div>
+            </div>
+            <hr style="border:0;border-top:1px solid #edf2f7;margin:12px 0" />
+            <div class="field">
+                <label>Administrative filter</label>
+                <select class="select" id="filter-admin"><option value="">All LGAs</option></select>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label>Asset type</label>
+                    <select class="select" id="filter-type">
+                        <option value="">All</option>
+                        <option>Borehole</option><option>Well</option><option>TreatmentPlant</option>
+                        <option>Reservoir</option><option>ElevatedTank</option><option>GroundStorageTank</option>
+                        <option>PumpingStation</option><option>DistributionMain</option><option>TransmissionMain</option>
+                        <option>Valve</option><option>Hydrant</option><option>WaterMeter</option>
+                        <option>PressureMonitoringPoint</option><option>SamplingStation</option><option>DrainageAsset</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Evidence class</label>
+                    <select class="select" id="filter-class">
+                        <option value="">All</option>
+                        <option>Observed</option><option>Imported</option><option>Estimated</option><option>Modelled</option><option>SyntheticDemonstration</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-sm" id="apply-filters" type="button" style="width:100%"><i class="fa fa-filter"></i> Apply filters</button>
+
+            <hr style="border:0;border-top:1px solid #edf2f7;margin:14px 0" />
+            <div class="flex-between mb-1"><label style="font-size:11.5px;font-weight:700;color:#5f7183;text-transform:uppercase;letter-spacing:.6px">Layers</label><button class="btn btn-sm" id="refresh-layers" type="button"><i class="fa fa-refresh"></i></button></div>
+            <div id="layer-tree"><div class="loading-block"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>
+
+            <hr style="border:0;border-top:1px solid #edf2f7;margin:14px 0" />
+            <div class="flex-between mb-1"><label style="font-size:11.5px;font-weight:700;color:#5f7183;text-transform:uppercase;letter-spacing:.6px">Bookmarks</label><button class="btn btn-sm" id="save-bookmark" type="button"><i class="fa fa-bookmark"></i> Save view</button></div>
+            <div id="bookmark-list"></div>
+        </div>
+    </aside>
+
+    <section class="gis-map-pane">
+        <div class="print-header"><h2 style="margin:0">WaterWatch — Port Harcourt GIS Explorer</h2><div class="small muted">Printed from the WaterWatch spatial intelligence platform</div></div>
+        <div id="gis-map"></div>
+        <div class="gis-floating gis-toolstrip" role="toolbar" aria-label="Map tools">
+            <button type="button" id="tool-select" title="Select"><i class="fa fa-mouse-pointer"></i></button>
+            <button type="button" id="tool-distance" title="Measure distance"><i class="fa fa-arrows-h"></i></button>
+            <button type="button" id="tool-area" title="Measure area"><i class="fa fa-square-o"></i></button>
+            <button type="button" id="tool-draw-point" title="Draw point"><i class="fa fa-map-marker"></i></button>
+            <button type="button" id="tool-draw-line" title="Draw line"><i class="fa fa-minus"></i></button>
+            <button type="button" id="tool-draw-polygon" title="Draw polygon"><i class="fa fa-picture-o"></i></button>
+            <button type="button" id="tool-edit" title="Edit selected geometry" @(canEdit ? "" : "disabled")><i class="fa fa-pencil"></i></button>
+            <button type="button" id="tool-buffer" title="Buffer analysis"><i class="fa fa-dot-circle-o"></i></button>
+            <button type="button" id="tool-export" title="Export selected / active layer"><i class="fa fa-download"></i></button>
+            <button type="button" id="tool-print" title="Print map"><i class="fa fa-print"></i></button>
+            <button type="button" id="tool-fullscreen" title="Full screen"><i class="fa fa-expand"></i></button>
+            <button type="button" id="tool-reset" title="Reset extent"><i class="fa fa-compress"></i></button>
+        </div>
+        <div class="gis-floating gis-coordinates" id="coordinate-display">lat — · lon —</div>
+        <div class="gis-floating gis-legend" id="map-legend" style="right:12px;bottom:92px"></div>
+        <div class="gis-floating" style="left:12px;bottom:44px;padding:7px 10px;font-size:11px;display:flex;gap:8px;align-items:center">
+            <span style="font-weight:800;color:#0b2239">N</span><i class="fa fa-arrow-up" style="color:#0f8b8d"></i>
+            <span class="muted">North</span>
+        </div>
+        <div class="gis-floating" id="basemap-switcher" style="right:12px;top:60px;padding:5px;display:flex;flex-direction:column;gap:2px">
+            <button class="btn btn-sm" data-basemap="osm" type="button" title="OpenStreetMap">OSM</button>
+            <button class="btn btn-sm" data-basemap="satellite" type="button" title="Satellite imagery">Sat</button>
+            <button class="btn btn-sm" data-basemap="topo" type="button" title="Terrain">Topo</button>
+            <button class="btn btn-sm" data-basemap="dark" type="button" title="Dark canvas">Dark</button>
+        </div>
+        <div class="gis-floating" style="right:180px;top:12px;padding:7px 10px;font-size:11px;display:none" id="draw-hint"></div>
+    </section>
+
+    <aside class="gis-panel right">
+        <div class="gis-panel-head">
+            <h3><i class="fa fa-info-circle" style="color:#0f8b8d"></i> Inspector</h3>
+            <button class="close-x" type="button" id="collapse-inspector" title="Collapse panel"><i class="fa fa-angle-right"></i></button>
+        </div>
+        <div class="gis-panel-body" id="inspector">
+            <div class="inspector-empty"><i class="fa fa-hand-pointer-o"></i>Select a feature on the map or search for a place to inspect its attributes and provenance.</div>
+        </div>
+        <div class="gis-panel-head" style="border-top:1px solid var(--ww-border);border-bottom:0;padding:8px 14px"><h3 style="font-size:11px;color:var(--ww-muted);text-transform:uppercase;letter-spacing:.7px">Scratch &amp; analysis</h3></div>
+        <div class="gis-panel-body" style="max-height:200px;flex:0 0 auto" id="scratch-results">
+            <div class="tiny muted">Drawn shapes, measurements and buffer results appear here. They are not saved unless you create an asset or export them.</div>
+        </div>
+    </aside>
+</div>
+
+<div class="modal-backdrop" id="asset-modal">
+    <div class="modal">
+        <div class="modal-head"><h3>Create asset from map</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="asset-form">
+            <div class="modal-body">
+                <div class="alert alert-warn mb-2"><i class="fa fa-info-circle"></i><div>Assets created here are recorded as observed, operator-entered data and are subject to server-side validation and audit.</div></div>
+                <div class="field-row">
+                    <div class="field"><label>Asset code</label><input class="input" name="assetCode" required maxlength="60" /></div>
+                    <div class="field"><label>Asset type</label><select class="select" name="assetType" id="asset-type-select"></select></div>
+                </div>
+                <div class="field"><label>Name</label><input class="input" name="name" required maxlength="200" /></div>
+                <div class="field"><label>Description</label><textarea class="input" name="description"></textarea></div>
+                <input type="hidden" name="geometryGeoJson" id="asset-geometry" />
+                <div class="field-row" id="asset-point-fields">
+                    <div class="field"><label>Latitude</label><input class="input" id="asset-lat" name="latitude" readonly /></div>
+                    <div class="field"><label>Longitude</label><input class="input" id="asset-lon" name="longitude" readonly /></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Admin area</label><select class="select" name="adminAreaId" id="asset-admin"><option value="">Not specified</option></select></div>
+                    <div class="field"><label>Service zone</label><select class="select" name="operationalAreaId" id="asset-zone"><option value="">Not specified</option></select></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Status</label><select class="select" name="status"><option>Unknown</option><option>Operational</option><option>UnderMaintenance</option><option>OutOfService</option><option>Decommissioned</option></select></div>
+                    <div class="field"><label>Condition</label><select class="select" name="condition"><option>Unknown</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select></div>
+                </div>
+                <div class="field"><label>Technical specifications (JSON, optional)</label><textarea class="input" name="specificationsJson" placeholder='{"diameter_mm": 200, "material": "HDPE"}'></textarea></div>
+                <label class="checkbox"><input type="checkbox" name="isSensitive" /> Sensitive infrastructure — hide location from public viewers</label>
+            </div>
+            <div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create asset</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="buffer-modal">
+    <div class="modal">
+        <div class="modal-head"><h3>Buffer analysis</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <div class="modal-body">
+            <div class="alert alert-info mb-2"><i class="fa fa-info-circle"></i><div>Buffers are generated in EPSG:32632 (UTM 32N), then transformed back to EPSG:4326. Intersections use PostGIS.</div></div>
+            <div class="field"><label>Radius (metres)</label><input class="input" id="buffer-radius" type="number" value="500" min="1" max="50000" /></div>
+            <div class="field"><label>Analysis anchor</label><div class="small muted" id="buffer-anchor">Map centre (select a feature for a feature-based buffer)</div></div>
+        </div>
+        <div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" id="run-buffer" type="button"><i class="fa fa-dot-circle-o"></i> Run analysis</button></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/gis.js"></script>
+}

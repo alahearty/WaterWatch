@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Access denied";
+}
+<div class="login-wrap">
+    <div class="login-card">
+        <div class="login-head"><h2 style="margin:0">Access denied</h2><p>Your role does not permit this operation.</p></div>
+        <div class="login-body">
+            <p class="muted">Authorisation is enforced on the server. If you need access, contact an administrator and request the appropriate role.</p>
+            <div class="flex gap-1"><a class="btn btn-primary" asp-controller="Dashboard" asp-action="Index">Return to overview</a><a class="btn" asp-controller="Account" asp-action="Login">Sign in as another user</a></div>
+        </div>
+    </div>
+</div>

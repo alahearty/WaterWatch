@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using WatchWaterConsumption.Models;
+using WaterWatch.Data;
 
 namespace WatchWaterConsumption.Repositories
 {
@@ -24,12 +25,15 @@ namespace WatchWaterConsumption.Repositories
         public async Task<IEnumerable<WaterConsumption>> GetAll()
         {
             await SaveDataAsync();
-            return await _context.Consumptions.ToListAsync();
+            return await _context.Consumptions
+                .Where(c => c.Neighbourhood != null && c.AverageMonthlyKL != null)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<WaterConsumption>> GetTopTenConsumers()
         {
             return await _context.Consumptions
+                .Where(c => c.Neighbourhood != null && c.AverageMonthlyKL != null)
                 .OrderByDescending(avgKL => avgKL.AverageMonthlyKL)
                 .Take(10)
                 .ToListAsync();

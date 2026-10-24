@@ -1,0 +1,49 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Flood Intelligence";
+    var canAnalyse = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.Hydrologist));
+}
+<div id="flood-permissions" data-can-analyse="@(canAnalyse ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Flood risk &amp; exposure</div>
+        <h1>Flood intelligence</h1>
+        <p>Observed, historical, modelled susceptibility, forecast and official warning layers are kept distinct. A susceptibility surface is never presented as a real-time flood forecast.</p>
+    </div>
+    <div class="page-actions"><a class="btn" href="/api/reports/flood-exposure?format=Csv"><i class="fa fa-download"></i> Exposure CSV</a></div>
+</div>
+<div class="alert alert-warn mb-2"><i class="fa fa-exclamation-triangle"></i><div><strong>Official warning status:</strong> no NIHSA warning feed is configured. Official flood warnings are not available in this deployment. Synthetic/modelled layers are labelled and cannot be issued as operational safety alerts.</div></div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue"><div class="kpi-label">Flood layers</div><div class="kpi-value" id="f-layers">—</div><div class="kpi-foot">All evidence classes</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Official layers</div><div class="kpi-value" id="f-official">—</div><div class="kpi-foot">Marked official; see validation</div></div>
+    <div class="kpi"><div class="kpi-label">Historical events</div><div class="kpi-value" id="f-events">—</div><div class="kpi-foot">Recorded event timeline</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Exposure analyses</div><div class="kpi-value" id="f-exposures">—</div><div class="kpi-foot">Persisted PostGIS results</div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card"><div class="card-head"><h3>Flood layer map</h3><span class="badge badge-outline" id="f-map-note">Layer types styled separately</span></div><div class="card-body flush" style="position:relative;height:470px"><div id="flood-map" style="position:absolute;inset:0"></div></div></div>
+    <div class="card"><div class="card-head"><h3>Layer governance</h3></div><div class="card-body flush" id="flood-layer-list"></div></div>
+</div>
+<div class="grid grid-2 mb-2">
+    <div class="card"><div class="card-head"><h3>Exposure analyses</h3></div><div class="card-body flush" id="flood-exposures"></div></div>
+    <div class="card"><div class="card-head"><h3>Historical events</h3></div><div class="card-body flush" id="flood-events"></div></div>
+</div>
+<div class="card">
+    <div class="card-head"><h3>What the exposure analysis does and does not do</h3></div>
+    <div class="card-body">
+        <div class="grid grid-2">
+            <div><h3 class="small">Method</h3><ul class="small muted"><li>Geometric intersection between the selected flood layer and assets, sampling stations and devices in PostGIS.</li><li>Population exposure is a sum of intersecting admin-area totals where a population value exists.</li><li>Building and road exposure appear only if an operator imports such layers.</li></ul></div>
+            <div><h3 class="small">Limitations</h3><ul class="small muted"><li>Not a damage, depth, velocity or casualty assessment.</li><li>Flood depth is unavailable unless a validated depth dataset is imported.</li><li>Synthetic demonstration layers are not observations and must not be used operationally.</li><li>Official warnings require an authorised, validated feed.</li></ul></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="exposure-modal">
+    <div class="modal wide"><div class="modal-head"><h3>Exposure analysis</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <div class="modal-body" id="exposure-body"></div>
+        <div class="modal-foot"><button class="btn" type="button" data-modal-close>Close</button></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/flood.js"></script>
+}

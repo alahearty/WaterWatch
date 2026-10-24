@@ -1,0 +1,72 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Field Operations";
+    var canManage = User.Identity?.IsAuthenticated == true && (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.FieldInspector) || User.IsInRole(Roles.WaterUtilityEngineer));
+}
+<div id="ops-permissions" data-can-manage="@(canManage ? "true" : "false")" hidden></div>
+<div class="page-head">
+    <div>
+        <div class="crumbs">Maintenance &amp; inspections</div>
+        <h1>Field operations</h1>
+        <p>Reported → Triaged → Assigned → In Progress → Resolved → Verified → Closed. Transitions are enforced on the server; verification requires a different user from the resolver.</p>
+    </div>
+    <div class="page-actions">
+        @if (canManage) { <button class="btn btn-primary" id="new-work-order" type="button"><i class="fa fa-plus"></i> New work order</button> }
+        <a class="btn" href="/api/reports/work-orders?format=Csv"><i class="fa fa-download"></i> CSV</a>
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue"><div class="kpi-label">Total work orders</div><div class="kpi-value" id="ops-total">—</div><div class="kpi-foot">All statuses</div></div>
+    <div class="kpi"><div class="kpi-label">Open</div><div class="kpi-value" id="ops-open">—</div><div class="kpi-foot">Not closed or cancelled</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Overdue</div><div class="kpi-value" id="ops-overdue">—</div><div class="kpi-foot">Past due date</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Awaiting verification</div><div class="kpi-value" id="ops-verify">—</div><div class="kpi-foot">Resolved status</div></div>
+</div>
+<div id="ops-availability" class="mb-2"></div>
+<div class="grid grid-main">
+    <div class="card">
+        <div class="card-head"><h3>Work order queue</h3><span class="sub" id="ops-count">—</span></div>
+        <div class="card-body">
+            <div class="toolbar mb-2">
+                <select class="select" id="ops-status" style="width:180px"><option value="">All statuses</option><option>Reported</option><option>Triaged</option><option>Assigned</option><option>InProgress</option><option>Resolved</option><option>Verified</option><option>Closed</option><option>Cancelled</option></select>
+                <select class="select" id="ops-priority" style="width:150px"><option value="">All priorities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+                <select class="select" id="ops-type" style="width:170px"><option value="">All types</option><option>Inspection</option><option>LeakRepair</option><option>Maintenance</option><option>Defect</option><option>Other</option></select>
+                <button class="btn" id="ops-refresh" type="button"><i class="fa fa-refresh"></i></button>
+            </div>
+            <div id="ops-table"><div class="loading-block"><div class="skeleton"></div><div class="skeleton"></div></div></div>
+        </div>
+    </div>
+    <div class="card"><div class="card-head"><h3>Status distribution</h3></div><div class="card-body"><div class="chart-box"><canvas id="ops-chart"></canvas></div><div class="availability mt-2"><i class="fa fa-info-circle"></i><div>Work order records and transitions are audited. Photos are not uploaded in this release.</div></div></div></div>
+</div>
+
+<div class="modal-backdrop" id="ops-create-modal">
+    <div class="modal wide"><div class="modal-head"><h3>New work order</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="ops-create-form"><div class="modal-body">
+            <div class="field"><label>Title</label><input class="input" name="title" required maxlength="200" /></div>
+            <div class="field"><label>Description</label><textarea class="input" name="description"></textarea></div>
+            <div class="field-row"><div class="field"><label>Type</label><select class="select" name="type"><option>Defect</option><option>Inspection</option><option>LeakRepair</option><option>Maintenance</option><option>Other</option></select></div><div class="field"><label>Priority</label><select class="select" name="priority"><option>Medium</option><option>High</option><option>Critical</option><option>Low</option></select></div></div>
+            <div class="field"><label>Asset (optional)</label><select class="select" name="assetId" id="ops-asset"><option value="">No specific asset</option></select></div>
+            <div class="field-row"><div class="field"><label>Assigned to (email)</label><input class="input" name="assignedTo" /></div><div class="field"><label>Due</label><input class="input" type="datetime-local" name="dueAt" /></div></div>
+            <div class="field-row"><div class="field"><label>Latitude</label><input class="input" name="latitude" /></div><div class="field"><label>Longitude</label><input class="input" name="longitude" /></div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Create work order</button></div></form>
+    </div>
+</div>
+<div class="modal-backdrop" id="ops-detail-modal">
+    <div class="modal wide"><div class="modal-head"><h3>Work order</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <div class="modal-body" id="ops-detail-body"></div>
+        <div class="modal-foot"><button class="btn" type="button" data-modal-close>Close</button></div>
+    </div>
+</div>
+<div class="modal-backdrop" id="ops-transition-modal">
+    <div class="modal"><div class="modal-head"><h3>Update work order status</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="ops-transition-form"><div class="modal-body">
+            <div class="field"><label>New status</label><select class="select" id="transition-status" name="status" required></select></div>
+            <div class="field"><label>Assignee (for assignment)</label><input class="input" name="assignedTo" /></div>
+            <div class="field"><label>Notes (required for Resolved / Verified)</label><textarea class="input" name="notes"></textarea></div>
+            <div class="alert alert-warn"><i class="fa fa-info-circle"></i><div>The server enforces valid transitions and the separation-of-duties rule for verification.</div></div>
+        </div><div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Save transition</button></div></form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/field-operations.js"></script>
+}

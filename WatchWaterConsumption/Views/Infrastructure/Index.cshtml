@@ -1,0 +1,90 @@
+@using WaterWatch.Security
+@{
+    ViewData["Title"] = "Infrastructure";
+    var canEdit = User.Identity?.IsAuthenticated == true &&
+                  (User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.GisAnalyst) || User.IsInRole(Roles.WaterUtilityEngineer));
+}
+<div class="page-head">
+    <div>
+        <div class="crumbs">Asset registry</div>
+        <h1>Water infrastructure</h1>
+        <p>Boreholes, treatment and storage, pumping, mains, valves, hydrants, meters, monitoring points and drainage assets. Sensitive locations are restricted by role.</p>
+    </div>
+    <div class="page-actions">
+        @if (canEdit)
+        {
+            <button class="btn btn-primary" id="open-asset-create" type="button"><i class="fa fa-plus"></i> New asset</button>
+        }
+        <a class="btn" asp-controller="Gis" asp-action="Index"><i class="fa fa-globe"></i> Map</a>
+    </div>
+</div>
+<div class="grid grid-4 mb-2">
+    <div class="kpi kpi-blue"><div class="kpi-label">Total assets</div><div class="kpi-value" id="inf-total">—</div><div class="kpi-foot">Registered in the asset registry</div></div>
+    <div class="kpi"><div class="kpi-label">Operational</div><div class="kpi-value" id="inf-operational">—</div><div class="kpi-foot">Status = Operational</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Poor / critical</div><div class="kpi-value" id="inf-poor">—</div><div class="kpi-foot">Condition assessment</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">No geometry</div><div class="kpi-value" id="inf-nogeom">—</div><div class="kpi-foot">Cannot be mapped or analysed</div></div>
+</div>
+<div class="grid grid-main mb-2">
+    <div class="card">
+        <div class="card-head"><h3>Registry</h3><span class="sub" id="inf-count">—</span></div>
+        <div class="card-body">
+            <div class="toolbar mb-2">
+                <div class="search-inline" style="flex:1"><i class="fa fa-search"></i><input class="input" id="inf-search" placeholder="Search name or asset code…" /></div>
+                <select class="select" id="inf-type" style="width:190px"><option value="">All types</option></select>
+                <select class="select" id="inf-status" style="width:170px"><option value="">All statuses</option><option>Operational</option><option>UnderMaintenance</option><option>OutOfService</option><option>Decommissioned</option><option>Unknown</option></select>
+                <button class="btn" id="inf-refresh" type="button"><i class="fa fa-refresh"></i></button>
+            </div>
+            <div id="inf-table"><div class="loading-block"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>
+            <div class="pagination" id="inf-pagination"></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Asset locations</h3><a class="small" asp-controller="Gis" asp-action="Index">Open explorer</a></div>
+        <div class="card-body flush" style="position:relative;height:520px"><div id="inf-map" style="position:absolute;inset:0"></div></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="asset-editor">
+    <div class="modal wide">
+        <div class="modal-head"><h3>New water asset</h3><button class="close-x" type="button" data-modal-close>&times;</button></div>
+        <form id="asset-editor-form">
+            <div class="modal-body">
+                <div class="alert alert-warn mb-2"><i class="fa fa-info-circle"></i><div>Operator-entered assets are classified as observed. Include a source reference if the asset was imported from a register.</div></div>
+                <div class="field-row">
+                    <div class="field"><label>Asset code *</label><input class="input" name="assetCode" required maxlength="60" /></div>
+                    <div class="field"><label>Asset type *</label><select class="select" name="assetType" required></select></div>
+                </div>
+                <div class="field"><label>Name *</label><input class="input" name="name" required maxlength="200" /></div>
+                <div class="field"><label>Description</label><textarea class="input" name="description"></textarea></div>
+                <div class="field-row">
+                    <div class="field"><label>Latitude *</label><input class="input" name="latitude" id="new-lat" required /></div>
+                    <div class="field"><label>Longitude *</label><input class="input" name="longitude" id="new-lon" required /></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Admin area</label><select class="select" name="adminAreaId" id="new-admin"><option value="">Not specified</option></select></div>
+                    <div class="field"><label>Service zone</label><select class="select" name="operationalAreaId" id="new-zone"><option value="">Not specified</option></select></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Owner</label><input class="input" name="owner" /></div>
+                    <div class="field"><label>Operator</label><input class="input" name="operator" /></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Installed on</label><input class="input" type="date" name="installedOn" /></div>
+                    <div class="field"><label>Capacity (m³/day)</label><input class="input" type="number" step="0.01" name="capacityM3PerDay" /></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Status</label><select class="select" name="status"><option>Unknown</option><option>Operational</option><option>UnderMaintenance</option><option>OutOfService</option><option>Decommissioned</option></select></div>
+                    <div class="field"><label>Condition</label><select class="select" name="condition"><option>Unknown</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select></div>
+                </div>
+                <div class="field"><label>Specifications (JSON)</label><textarea class="input" name="specificationsJson" placeholder='{"diameter_mm": 200, "material": "HDPE"}'></textarea></div>
+                <div class="field"><label>Source reference</label><input class="input" name="sourceReference" placeholder="Register reference or source URL" /></div>
+                <label class="checkbox"><input type="checkbox" name="isSensitive" /> Sensitive infrastructure — restrict coordinates to authorised roles</label>
+            </div>
+            <div class="modal-foot"><button class="btn" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create asset</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/infrastructure.js"></script>
+}

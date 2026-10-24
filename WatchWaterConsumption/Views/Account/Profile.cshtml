@@ -1,0 +1,27 @@
+@model WaterWatch.Domain.Entities.ApplicationUser
+@{
+    ViewData["Title"] = "Profile";
+    var roles = ViewBag.Roles as IList<string> ?? new List<string>();
+}
+<div class="page-head">
+    <div><div class="crumbs">Account</div><h1>Profile</h1><p>Role and organisation information for the current session.</p></div>
+    <div class="page-actions">
+        <form method="post" asp-controller="Account" asp-action="Logout">@Html.AntiForgeryToken()<button class="btn btn-danger" type="submit"><i class="fa fa-sign-out"></i> Sign out</button></form>
+    </div>
+</div>
+<div class="grid grid-2">
+    <div class="card"><div class="card-head"><h3>Identity</h3></div><div class="card-body">
+        <div class="kv"><dt>Display name</dt><dd>@Model.DisplayName</dd></div>
+        <div class="kv"><dt>Email</dt><dd>@Model.Email</dd></div>
+        <div class="kv"><dt>Organisation</dt><dd>@(Model.Organisation ?? "—")</dd></div>
+        <div class="kv"><dt>Active</dt><dd>@(Model.IsActive ? "Yes" : "No")</dd></div>
+        <div class="kv"><dt>Member since</dt><dd>@Model.CreatedAt.ToString("yyyy-MM-dd")</dd></div>
+    </div></div>
+    <div class="card"><div class="card-head"><h3>Roles &amp; scope</h3></div><div class="card-body">
+        @foreach (var role in roles)
+        {
+            <span class="badge badge-teal" style="margin:0 4px 4px 0">@role</span>
+        }
+        <div class="availability mt-2"><i class="fa fa-lock"></i><div>Role policies are enforced by the backend. Public viewers cannot see sensitive infrastructure coordinates.</div></div>
+    </div></div>
+</div>

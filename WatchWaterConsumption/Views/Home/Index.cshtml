@@ -7,8 +7,9 @@
 <div id="map"></div>
 
 <script>
-    // Url Endpoints
-    var dataUrl = "http://localhost:7083/waterconsumption/getall";
+document.addEventListener("DOMContentLoaded", function () {
+    // Url Endpoints (relative so the app works on any host/port)
+    var dataUrl = "/api/WaterConsumption/getall";
 
     // Basemap urls
     var osm_humanitarian = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -68,9 +69,9 @@
                 weight: 2
             });
             poly.bindPopup(
-                "<h4><b>Suburb Group:</b> " + item.suburb_group + "</h4>" +
-                "<h4><b>Neighbourhood: </b>" + item.neighbourhood + "</h4>" +
-                "<h4><b>Water Consumption: </b>" + item.averageMonthlyKL + " KL </h4>"
+                "<h4><b>Suburb Group:</b> " + (item.suburbGroup || "N/A") + "</h4>" +
+                "<h4><b>Neighbourhood: </b>" + (item.neighbourhood || "N/A") + "</h4>" +
+                "<h4><b>Water Consumption: </b>" + (item.averageMonthlyKL ?? "N/A") + " KL </h4>"
             );
             poly.on('mouseover', function (e) {
                 this.setStyle({
@@ -132,7 +133,7 @@
         var y_data = [];
 
         $.ajax({
-            url: "/waterconsumption/topten",
+            url: "/api/WaterConsumption/topten",
             cache: "false",
             dataType: "json",
             type: "GET",
@@ -180,4 +181,5 @@
             }
         });
     }
+});
 </script>
