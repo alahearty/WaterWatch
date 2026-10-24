@@ -1,189 +1,255 @@
-# WaterWatch
+# WaterWatch — Port Harcourt Water Intelligence
 
-## Overview
+WaterWatch is an ASP.NET Core MVC, PostgreSQL/PostGIS and Leaflet application for exploring water
+infrastructure, consumption, quality, hydrology, flood exposure and field operations in Port
+Harcourt City LGA and Obio/Akpor LGA, Rivers State, Nigeria.
 
-WaterWatch is an ASP.NET Core MVC + Leaflet application for visualising household water
-consumption in Cape Town suburbs. The home page draws colour-coded suburb polygons from a bundled
-GeoJSON dataset and shows the top ten consumers in a bar chart. Data is imported from
-`WatchWaterConsumption/map.geojson` into PostgreSQL on first access.
+It is an undergraduate final-year project and demonstration system. It is not an operational
+utility control system and must not be used to issue public health or flood warnings.
+
+## Project overview
+
+The application combines an authenticated operational shell, a spatial data catalogue, a GIS
+explorer, role-protected APIs and analytical workspaces. Every imported or generated record carries
+a source and data classification so that observed, imported, estimated, modelled and synthetic
+values can be distinguished.
+
+The system currently implements 16 major areas:
+
+| Area | What it does |
+|---|---|
+| Overview dashboard | KPIs, operational map, consumption trend, quality states, availability and priority work |
+| GIS Explorer | Leaflet map, layer catalogue, filters, asset inspection, coordinate search and drawing tools |
+| Infrastructure | Asset registry, inspections, maintenance records, network nodes/edges and network tracing |
+| Consumption | Consumer accounts, meters, readings, CSV import, trends, anomalies and spatial aggregates |
+| Water Quality | Stations, campaigns, samples, results, standards, compliance classification and trends |
+| Hydrology | Stations, water-level/flow observations, Open-Meteo rainfall sync and drainage obstructions |
+| Flood Intelligence | Flood layers/events, exposure analysis and clearly classified evidence states |
+| Groundwater | Borehole registry, water levels, pumping tests, trends and contamination proximity |
+| Leakage & NRW | DMA water balances, loss metrics, leak incidents, hotspots and pressure anomalies |
+| Remote Sensing | Sentinel-2/Landsat STAC search, cached scene metadata and change-layer catalogue |
+| IoT Monitoring | Device registry, API-key ingestion, telemetry readings, alert rules, alerts and SignalR |
+| Spatial Analytics | Point-in-polygon, buffers, nearest assets, coverage, density, network isolation and tracing |
+| Forecasting | Demand, water-level, asset-risk, leakage and water-quality baseline forecasts with metadata |
+| Field Operations | Work orders and enforced status transitions from reported through verified/closed |
+| Reports | CSV, XLSX and PDF exports with filters and data-classification metadata |
+| Administration | Users, roles, audit trail and import history |
+
+The older Cape Town consumption API remains available for compatibility, but the primary
+application is the Port Harcourt water-intelligence workspace.
 
 ## Problem statement
 
-Water utilities and municipalities need an easy way to see which neighbourhoods consume the most
-water. WaterWatch turns an open GeoJSON dataset into an interactive choropleth map and ranking so
-patterns can be inspected without a desktop GIS package.
+Water teams often hold infrastructure, meter, water-quality and environmental data in separate
+spreadsheets and GIS files. This makes it difficult to answer practical questions such as which
+areas consume the most water, where leaks or quality failures cluster, which assets are exposed to
+flooding and which field work should be prioritised.
 
-## Aim
-
-To provide an accessible GIS dashboard that imports neighbourhood water-consumption data and presents it as a map and top-ten ranking.
-
-## Objectives
-
-- Import neighbourhood polygons and consumption values from GeoJSON into PostgreSQL.
-- Display a choropleth map coloured by average monthly consumption.
-- Show suburb details in map popups.
-- Show the top ten consuming neighbourhoods in a chart.
-- Demonstrate EF Core migrations, a repository layer and a Leaflet front end in ASP.NET Core MVC.
+WaterWatch demonstrates a single spatial platform that brings those records together with explicit
+data provenance, role-based access and map-linked analytics.
 
 ## Technology stack
 
 | Layer | Technology |
 |---|---|
 | Runtime | ASP.NET Core 8 MVC |
-| Database | PostgreSQL + EF Core 8 (Npgsql) |
-| Mapping | Leaflet 1.9, OpenStreetMap/Esri tile layers |
-| Charting | Chart.js 2.4 |
-| UI theme | AdminLTE 2 / Bootstrap 3 (bundled under `wwwroot/app`) |
-| Tests | No automated test project is included |
+| Persistence | PostgreSQL + PostGIS, EF Core 8, Npgsql, NetTopologySuite |
+| Identity | ASP.NET Core Identity with role policies and cookie authentication |
+| Mapping | Leaflet, Leaflet.draw, OpenStreetMap/Esri/OpenTopoMap tile layers |
+| Charts and UI | Chart.js, Bootstrap, bundled AdminLTE-style assets |
+| Realtime | SignalR telemetry hub |
+| Reporting | QuestPDF, ClosedXML, CsvHelper |
+| Imports | GeoJSON, CSV, KML, zipped Shapefile, GeoPackage; WMS/WFS and GeoTIFF metadata registration |
+| External services | Open-Meteo, Nominatim, Element 84 Earth Search STAC |
+| Tests | NUnit, FluentAssertions, EF Core InMemory and optional PostGIS integration test |
 
 ## Architecture
 
-```
-Browser (Leaflet + jQuery + Chart.js)
-  -> ASP.NET Core MVC HomeController (single map page)
-  -> /api/WaterConsumption/* (WaterConsumptionController)
-      -> WaterConsumptionRepository
-          -> EF Core DatabaseContext
-              -> PostgreSQL `cptwater`
-  map.geojson imported on first GetAll call
+```text
+Browser: Razor views + Leaflet + Chart.js + SignalR client
+  -> ASP.NET Core MVC page controllers and JSON API controllers
+      -> Domain services:
+           consumption, quality, hydrology, flood, groundwater,
+           NRW, telemetry, forecasting, spatial analysis, imports, reports
+          -> EF Core 8 + Npgsql + NetTopologySuite
+              -> PostgreSQL 18 + PostGIS 3.6 (waterwatch)
+  -> Optional external providers: Open-Meteo, Nominatim, Earth Search STAC
 ```
 
-The API controller is namespaced `WaterWatch.Controllers` but lives under
-`WatchWaterConsumption/Controllers`.
+- Geometry is stored in EPSG:4326 with GiST indexes.
+- Metric operations use PostGIS geography/UTM zone 32N calculations rather than raw degrees.
+- The application is a modular monolith; no microservices are required.
+- Migrations and seeding run at startup.
+- Health endpoint: `/health`. Swagger: `/swagger` in Development.
 
-## Software prerequisites
+## Data, source and evidence model
+
+Bundled source extracts are under `data/sources/`:
+
+- OCHA COD-AB administrative boundaries for Nigeria, Rivers State, Port Harcourt City LGA and
+  Obio/Akpor LGA.
+- OpenStreetMap settlements, waterways, water bodies and water infrastructure extracts for the Port
+  Harcourt area.
+- OCHA COD-PS population projection for Rivers State.
+
+External data sources used by the application include Open-Meteo, Nominatim and Element 84 Earth
+Search. Optional providers fail with an explicit availability state; the application does not
+replace missing observations with invented values.
+
+Data classifications include `Observed`, `Imported`, `Estimated`, `Modelled` and
+`SyntheticDemonstration`. Utility-specific service zones, DMAs, consumer accounts, samples and
+telemetry are either operator-supplied or generated only when demo mode is enabled and are visibly
+labelled as synthetic.
+
+## Prerequisites
 
 - .NET 8 SDK
-- PostgreSQL 14+
-- Internet access for map tiles (or modify the tile URLs)
-- No Node.js build step: all front-end assets are bundled
+- PostgreSQL 14 or newer with PostGIS
+- Internet access for map tiles and optional external providers
+- No Node.js build step: frontend assets are bundled
 
 ## Database setup
 
-Create a database and role (the default configuration uses `worinium`):
-
-```sql
-CREATE USER worinium WITH PASSWORD 'worisoft@123';
-CREATE DATABASE cptwater OWNER worinium;
-```
-
-Default connection string (`appsettings.json`):
-
-```
-Host=localhost;Port=5432;Database=cptwater;Username=worinium;Password=worisoft@123
-```
-
-The migration `20240529101822_InitialMigration` creates the `Consumptions` table. The application
-runs `Database.Migrate()` at startup, so no manual `dotnet ef` step is required. Data is imported
-lazily the first time `GET /api/WaterConsumption/getall` is called.
-
-## Environment configuration
-
-Override the connection string with:
-
-```
-ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=cptwater;Username=worinium;Password=worisoft@123
-ASPNETCORE_ENVIRONMENT=Development
-```
-
-See `.env.example`. ASP.NET Core does not auto-load `.env` files; set variables in the shell.
-
-## Build
+Run the database setup as a PostgreSQL superuser:
 
 ```powershell
-dotnet build WaterWatch.sln
+psql -U postgres -f database/setup.sql
 ```
 
+This creates:
+
+- Database: `waterwatch`
+- Application role: `waterwatch_app`
+- Local development password: `changeme-local`
+- Extensions: `postgis` and `postgis_raster`
+
+The password is a local demonstration credential. Change it for any shared or deployed environment.
+
+## Configuration
+
+`WatchWaterConsumption/appsettings.json` contains a placeholder connection string. For local demo
+mode, copy `.env.example` to `.env` and edit it:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The launcher script loads `.env` automatically. The expected values are:
+
+```text
+ASPNETCORE_ENVIRONMENT=Development
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=waterwatch;Username=waterwatch_app;Password=changeme-local
+WaterWatch__DemoMode=true
+```
+
+Without demo mode, no synthetic operational records are created. A bootstrap administrator can be
+configured with `WaterWatch__AdminEmail` and `WaterWatch__AdminPassword`.
+
 ## Run
+
+### One-click Windows launcher
+
+Double-click **`run.cmd`**, or right-click **`run.ps1` → Run with PowerShell**.
+
+The launcher:
+
+1. checks for the .NET SDK;
+2. loads `.env` when present;
+3. starts the MVC application and bundled frontend;
+4. opens `http://localhost:5099`.
+
+The first request can take a few seconds while migrations, boundary imports and demo data are
+prepared.
+
+### Manual run
 
 ```powershell
 dotnet run --project WatchWaterConsumption\WatchWaterConsumption.csproj
 ```
 
-Default development URLs from `launchSettings.json`:
+Default URLs:
 
-- HTTP: <http://localhost:5099>
-- HTTPS: <https://localhost:7014>
+- Application: <http://localhost:5099>
+- HTTPS profile: <https://localhost:7014>
 - Swagger: <http://localhost:5099/swagger>
+- Health: <http://localhost:5099/health>
 
-Open the map at <http://localhost:5099/>. The first load can take a few seconds while 119
-GeoJSON features are imported; refresh the page after the API finishes.
+## Demonstration accounts
 
-## Demo data
+Demo accounts exist only when `WaterWatch__DemoMode=true`. The password for every account is:
 
-No credentials are required. The bundled `map.geojson` is the demonstration dataset (Cape Town
-suburbs). The importer skips malformed features that have no neighbourhood name or consumption
-value, leaving 113 valid polygons on the current dataset.
+```text
+WaterWatch#2026
+```
 
-## Demonstration procedure
+| Email | Role |
+|---|---|
+| `admin@waterwatch.local` | Administrator |
+| `analyst@waterwatch.local` | GIS Analyst |
+| `engineer@waterwatch.local` | Water Utility Engineer |
+| `hydrologist@waterwatch.local` | Hydrologist |
+| `environment@waterwatch.local` | Environmental Officer |
+| `inspector@waterwatch.local` | Field Inspector |
+| `viewer@waterwatch.local` | Management Viewer |
+| `public@waterwatch.local` | Public Viewer |
 
-1. Open the dashboard and allow the first GeoJSON import to finish.
-2. Show the choropleth map, legend and basemap switcher.
-3. Hover a polygon to show its suburb group, neighbourhood and KL value.
-4. Show the top-ten consumer chart.
-5. Open `/api/WaterConsumption/getall` and `/api/WaterConsumption/topten` to show the API data.
-6. Refresh the page to demonstrate persisted database reads.
+Anonymous users can view selected read-only maps and dashboards. All mutations require an
+appropriate authenticated role.
 
-The full academic presentation script is in `DEMO_GUIDE.md`.
+## Main API areas
 
-## API endpoints
+| Area | Representative endpoints |
+|---|---|
+| Geography and layers | `/api/geography/*` |
+| Assets and network | `/api/assets/*`, `/api/analytics/network/*` |
+| Consumption | `/api/consumption/*` |
+| Water quality | `/api/water-quality/*` |
+| Hydrology | `/api/hydrology/*` |
+| Flood | `/api/flood/*` |
+| Groundwater | `/api/groundwater/*` |
+| NRW and leaks | `/api/nrw/*` |
+| Telemetry | `/api/telemetry/*`, `/hubs/telemetry` |
+| Forecasting | `/api/forecasting/*` |
+| Reports | `/api/reports/*` |
+| Imports | `/api/import/*` |
+| Administration | `/api/admin/*` |
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/WaterConsumption/getall` | Import data if needed and return all valid polygons |
-| GET | `/api/WaterConsumption/topten` | Return the ten highest-consumption neighbourhoods |
-| GET | `/swagger` | Swagger UI |
+Use `/swagger` for the full request and response catalogue.
 
-## Main features
+## Security
 
-- Leaflet map with five switchable base layers.
-- Choropleth colour scale for average monthly water use (KL).
-- Hover popups with suburb group, neighbourhood and consumption.
-- Horizontal bar chart of the top ten consumers.
-- Automatic EF Core migration and GeoJSON seeding.
+- ASP.NET Core Identity with eight application roles.
+- Policy-based authorization for asset editing, imports, quality, hydrology, field operations, NRW,
+  telemetry and administration.
+- Antiforgery validation for browser mutations.
+- Rate limiting and API exception middleware.
+- Audit entries for writes and imports.
+- Sensitive asset coordinates excluded from public layers and detail endpoints.
+- HSTS and additional security headers in production.
+- External provider credentials and database secrets are supplied through environment variables.
 
 ## Testing
 
-The repository includes four NUnit tests in
-`tests/WatchWaterConsumption.Tests`. They use an in-memory database and a copied
-`map.geojson`, so no PostgreSQL instance is needed for the test run.
+Run the NUnit suite:
 
 ```powershell
 dotnet test tests\WatchWaterConsumption.Tests\WatchWaterConsumption.Tests.csproj
 ```
 
-Expected result: `Passed: 4`.
-
-The tests cover:
-
-- GeoJSON import and filtering of malformed/NULL rows (113 valid rows).
-- Top-ten ordering and NULL exclusion.
-- Filtering of NULL rows already present in the database.
-- Missing GeoJSON file handling without an exception.
-
-Manual smoke test performed during the audit:
-
-1. Start PostgreSQL and the app.
-2. Open <http://localhost:5099/>.
-3. Confirm the map renders suburb polygons and the legend.
-4. Confirm `GET /api/WaterConsumption/getall` returns 113 records with non-null names/values.
-5. Confirm `GET /api/WaterConsumption/topten` returns 10 records.
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| Blank page / `L is not defined` | The third-party scripts must load before the page script. This was fixed in `_Layout.cshtml`; rebuild after editing Razor views. |
-| Map empty or chart missing | Open the browser console and check `/api/WaterConsumption/getall`; the first import can take several seconds. |
-| Npgsql connection error | Create the `cptwater` database and check the connection string. |
-| Duplicate data after re-import | The importer only runs when `Consumptions` is empty. Delete the table rows or recreate the database to re-import. |
-| Map tiles do not load | Some basemaps use HTTP/Esri endpoints; try the OpenStreetMap layer or use a network that allows those hosts. |
+The suite covers domain calculations, water-balance and quality rules, consumption import behavior
+and the legacy repository. The PostGIS integration test is skipped unless
+`WATERWATCH_TEST_CONNECTION` points to a disposable PostgreSQL database with PostGIS.
 
 ## Known limitations
 
-- No authentication or authorisation; the map and API are public.
-- The dataset is a single 2017 snapshot; there is no upload or editing UI.
-- Some GeoJSON features are malformed and are filtered out.
-- Chart.js 2.4 and AdminLTE 2 are old bundled assets retained from the original project.
-- Tests cover the data/import layer only; there is no browser automation or CI pipeline in the
-  project itself.
+- Demonstration records are synthetic and visibly labelled; they are not official utility data.
+- Utility DMA/service-zone boundaries and the asset register are analytical demonstration sectors,
+  not surveyed or official utility boundaries.
+- OSM coverage is incomplete and volunteered; mapped centrelines are not engineering surveys.
+- Official NIHSA flood warnings and an authoritative utility feed are not connected.
+- Remote sensing requires network access to the Earth Search STAC catalogue; cached metadata is
+  labelled separately.
+- GeoTIFF import is metadata registration only; raster tile processing is not enabled.
+- The legacy Cape Town `/api/WaterConsumption/*` endpoints remain for compatibility only.
+- There is no production deployment pipeline, hardware provisioning or real device certificate
+  management in this academic project.
